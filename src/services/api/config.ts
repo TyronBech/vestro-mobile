@@ -21,8 +21,11 @@ const DEFAULT_API_URL = "http://localhost:3000/api";
 const DEFAULT_TIMEOUT_MS = 8000;
 const DEFAULT_RETRIES = 1;
 
-const timeoutFromEnv = Number(process.env.EXPO_PUBLIC_API_TIMEOUT_MS);
-const retriesFromEnv = Number(process.env.EXPO_PUBLIC_API_RETRIES);
+const env =
+  (globalThis as { process?: { env?: Record<string, string | undefined> } })
+    .process?.env ?? {};
+const timeoutFromEnv = Number(env.EXPO_PUBLIC_API_TIMEOUT_MS);
+const retriesFromEnv = Number(env.EXPO_PUBLIC_API_RETRIES);
 
 const getDebuggerHost = (): string | null => {
   const debuggerHost = Constants.expoGoConfig?.debuggerHost;
@@ -51,7 +54,7 @@ const looksLikeLocalhost = (value: string): boolean =>
 const buildApiUrlFromHost = (host: string): string => `http://${host}:3000/api`;
 
 const resolveApiUrl = (): string => {
-  const envUrl = process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+  const envUrl = env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
   if (!looksLikeLocalhost(envUrl)) {
     return envUrl;
   }
