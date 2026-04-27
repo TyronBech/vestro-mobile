@@ -39,7 +39,8 @@ grant usage on sequence orders_id_seq to app_writer;
 -- No DELETE permission
 
 -- Login role inherits from these
-create role app_user login password 'xxx';
+-- Supply the password via a secret manager or CI secret; do not hardcode real credentials in SQL.
+create role app_user login password '<SET_VIA_SECRET_MANAGER>';
 grant app_writer to app_user;
 ```
 
