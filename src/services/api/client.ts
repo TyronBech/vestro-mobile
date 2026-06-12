@@ -1,4 +1,5 @@
-import { API_BASE_URL, API_RETRIES, API_TIMEOUT_MS } from "./config";
+import { API_BASE_URL, API_RETRIES, API_TIMEOUT_MS, SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "./config";
+import * as SecureStore from "expo-secure-store";
 
 interface FetchOptions extends RequestInit {
   headers?: Record<string, string>;
@@ -24,10 +25,22 @@ export class ApiClientError extends Error {
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getErrorMessage = (data: unknown, fallback: string): string => {
-  if (typeof data === "object" && data !== null && "message" in data) {
-    const message = (data as { message?: unknown }).message;
-    if (typeof message === "string" && message.trim()) {
-      return message;
+  if (typeof data === "object" && data !== null) {
+    if ("errors" in data && Array.isArray((data as any).errors) && (data as any).errors.length > 0) {
+      const firstError = (data as any).errors[0];
+      if (typeof firstError === "object" && firstError !== null && "message" in firstError) {
+        const message = firstError.message;
+        if (typeof message === "string" && message.trim()) {
+          return message;
+        }
+      }
+    }
+
+    if ("message" in data) {
+      const message = (data as { message?: unknown }).message;
+      if (typeof message === "string" && message.trim()) {
+        return message;
+      }
     }
   }
 
@@ -73,7 +86,7 @@ const normalizeError = (error: unknown): ApiClientError => {
     return error;
   }
 
-  if (error instanceof DOMException && error.name === "AbortError") {
+  if (error instanceof Error && error.name === "AbortError") {
     return new ApiClientError("Request timed out.", "timeout");
   }
 
@@ -102,6 +115,18 @@ export const apiClient = async <T>(
   const defaultHeaders: Record<string, string> = {
     "Content-Type": "application/json",
   };
+
+  try {
+    const token = await SecureStore.getItemAsync(
+      SECURE_STORE_KEYS.ACCESS_TOKEN,
+      SECURE_STORE_OPTIONS
+    );
+    if (token) {
+      defaultHeaders["Authorization"] = `Bearer ${token}`;
+    }
+  } catch (err) {
+    console.error("Failed to retrieve access token from SecureStore", err);
+  }
 
   const {
     timeoutMs: _timeoutMs,
@@ -147,7 +172,13 @@ export const apiClient = async <T>(
         continue;
       }
 
-      console.error(`API Error on ${endpoint}:`, normalizedError);
+      if (
+        normalizedError.kind !== "http" ||
+        !normalizedError.status ||
+        normalizedError.status >= 500
+      ) {
+        console.error(`API Error on ${endpoint}:`, normalizedError);
+      }
       throw normalizedError;
     } finally {
       clearTimeout(timeoutId);
