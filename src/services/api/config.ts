@@ -83,3 +83,5 @@ export const API_RETRIES =
   Number.isFinite(retriesFromEnv) && retriesFromEnv >= 0
     ? retriesFromEnv
     : DEFAULT_RETRIES;
+
+export const APP_NAME = env.EXPO_PUBLIC_APP_NAME || env.APP_NAME || "vestro";

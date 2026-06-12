@@ -9,7 +9,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: "#6B7280",
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Home" }} />
+      <Tabs.Screen name="home" options={{ title: "Home" }} />
     </Tabs>
   );
 }
