@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_RETRIES, API_TIMEOUT_MS } from "./config";
+import { API_BASE_URL, API_RETRIES, API_TIMEOUT_MS, SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "./config";
 import * as SecureStore from "expo-secure-store";
 
 interface FetchOptions extends RequestInit {
@@ -117,7 +117,10 @@ export const apiClient = async <T>(
   };
 
   try {
-    const token = await SecureStore.getItemAsync("vestro_access_token");
+    const token = await SecureStore.getItemAsync(
+      SECURE_STORE_KEYS.ACCESS_TOKEN,
+      SECURE_STORE_OPTIONS
+    );
     if (token) {
       defaultHeaders["Authorization"] = `Bearer ${token}`;
     }

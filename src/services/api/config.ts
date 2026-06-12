@@ -1,5 +1,17 @@
 import { NativeModules, Platform } from "react-native";
 import Constants from "expo-constants";
+import * as SecureStore from "expo-secure-store";
+
+const APP_SLUG = Constants.expoConfig?.slug || "vestro";
+
+export const SECURE_STORE_KEYS = {
+  ACCESS_TOKEN: `${APP_SLUG}_access_token`,
+} as const;
+
+export const SECURE_STORE_OPTIONS: SecureStore.SecureStoreOptions = {
+  keychainAccessible: SecureStore.WHEN_UNLOCKED,
+  keychainService: `${APP_SLUG}_auth_keychain`,
+};
 
 const DEFAULT_API_URL = "http://localhost:3000/api";
 const DEFAULT_TIMEOUT_MS = 8000;

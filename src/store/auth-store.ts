@@ -2,8 +2,7 @@ import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import { apiLogin, apiSignup, LoginParams, SignupParams, UserResponse } from "../services/api/endpoints/auth";
 import { fetchProfile } from "../services/api/endpoints/profile";
-
-const TOKEN_KEY = "vestro_access_token";
+import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
 
 interface AuthState {
   user: UserResponse | null;
@@ -28,7 +27,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   initialize: async () => {
     try {
-      const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
+      const storedToken = await SecureStore.getItemAsync(
+        SECURE_STORE_KEYS.ACCESS_TOKEN,
+        SECURE_STORE_OPTIONS
+      );
       if (storedToken) {
         set({ accessToken: storedToken });
         // Fetch profile to verify token and load user data
@@ -41,7 +43,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (err) {
       // If token is invalid or expired, clear it
       try {
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
+        await SecureStore.deleteItemAsync(
+          SECURE_STORE_KEYS.ACCESS_TOKEN,
+          SECURE_STORE_OPTIONS
+        );
       } catch (e) {
         console.error("Failed to clear invalid token", e);
       }
@@ -56,7 +61,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { token, user } = response.data;
 
       if (token) {
-        await SecureStore.setItemAsync(TOKEN_KEY, token);
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.ACCESS_TOKEN,
+          token,
+          SECURE_STORE_OPTIONS
+        );
         set({
           accessToken: token,
           user,
@@ -79,7 +88,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { token, user } = response.data;
 
       if (token) {
-        await SecureStore.setItemAsync(TOKEN_KEY, token);
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.ACCESS_TOKEN,
+          token,
+          SECURE_STORE_OPTIONS
+        );
         set({
           accessToken: token,
           user,
@@ -97,7 +110,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     try {
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      await SecureStore.deleteItemAsync(
+        SECURE_STORE_KEYS.ACCESS_TOKEN,
+        SECURE_STORE_OPTIONS
+      );
     } catch (err) {
       console.error("Failed to delete token on logout", err);
     }
