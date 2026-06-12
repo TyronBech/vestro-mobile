@@ -1,4 +1,5 @@
 import { NativeModules, Platform } from "react-native";
+import Constants from "expo-constants";
 
 const DEFAULT_API_URL = "http://localhost:3000/api";
 const DEFAULT_TIMEOUT_MS = 8000;
@@ -9,6 +10,14 @@ const env =
     .process?.env ?? {};
 const timeoutFromEnv = Number(env.EXPO_PUBLIC_API_TIMEOUT_MS);
 const retriesFromEnv = Number(env.EXPO_PUBLIC_API_RETRIES);
+
+const getDebuggerHost = (): string | null => {
+  const debuggerHost = Constants.expoGoConfig?.debuggerHost;
+  if (debuggerHost) {
+    return debuggerHost.split(":")[0] || null;
+  }
+  return null;
+};
 
 const parseScriptHost = (): string | null => {
   const scriptURL = NativeModules?.SourceCode?.scriptURL;
@@ -32,6 +41,11 @@ const resolveApiUrl = (): string => {
   const envUrl = env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
   if (!looksLikeLocalhost(envUrl)) {
     return envUrl;
+  }
+
+  const debuggerHost = getDebuggerHost();
+  if (debuggerHost) {
+    return buildApiUrlFromHost(debuggerHost);
   }
 
   const expoHost = parseScriptHost();
