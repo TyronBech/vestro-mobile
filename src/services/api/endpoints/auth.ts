@@ -12,3 +12,9 @@ export const apiSignup = (params: SignupParams) =>
     method: "POST",
     body: JSON.stringify(params),
   });
+
+export const apiVerifySupabase = (params: { supabaseToken: string }) =>
+  apiClient<ApiResponse<AuthSuccessPayload>>("/auth/supabase/verify", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });

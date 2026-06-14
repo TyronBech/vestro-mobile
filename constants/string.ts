@@ -22,6 +22,8 @@ export const Strings = {
   emailPlaceholder: "name@domain.com",
   passwordLabel: "Password",
   passwordPlaceholder: "••••••••",
+  googleLoginButtonText: "CONTINUE WITH GOOGLE",
+  googleLoginError: "Google Sign-In was cancelled or failed.",
   
   // Alerts / Errors
   authErrorTitle: "Auth Error",

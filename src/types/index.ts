@@ -66,6 +66,7 @@ export interface AuthState {
   initialize: () => Promise<void>;
   login: (params: LoginParams) => Promise<void>;
   signup: (params: SignupParams) => Promise<void>;
+  loginWithGoogle: (supabaseToken: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
 }

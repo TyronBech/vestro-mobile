@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import { apiLogin, apiSignup } from "../services/api/endpoints/auth";
+import { apiLogin, apiSignup, apiVerifySupabase } from "../services/api/endpoints/auth";
 import { fetchProfile } from "../services/api/endpoints/profile";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
 import { AuthState } from "../types";
@@ -91,6 +91,33 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     } catch (err: any) {
       set({ error: err.message || "Signup failed", loading: false });
+      throw err;
+    }
+  },
+
+  loginWithGoogle: async (supabaseToken) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await apiVerifySupabase({ supabaseToken });
+      const { token, user } = response.data;
+
+      if (token) {
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.ACCESS_TOKEN,
+          token,
+          SECURE_STORE_OPTIONS
+        );
+        set({
+          accessToken: token,
+          user,
+          isAuthenticated: true,
+          loading: false,
+        });
+      } else {
+        set({ loading: false });
+      }
+    } catch (err: any) {
+      set({ error: err.message || "Google login failed", loading: false });
       throw err;
     }
   },
