@@ -1,22 +1,9 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import { apiLogin, apiSignup, LoginParams, SignupParams, UserResponse } from "../services/api/endpoints/auth";
+import { apiLogin, apiSignup } from "../services/api/endpoints/auth";
 import { fetchProfile } from "../services/api/endpoints/profile";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
-
-interface AuthState {
-  user: UserResponse | null;
-  accessToken: string | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  error: string | null;
-  
-  initialize: () => Promise<void>;
-  login: (params: LoginParams) => Promise<void>;
-  signup: (params: SignupParams) => Promise<void>;
-  logout: () => Promise<void>;
-  clearError: () => void;
-}
+import { AuthState } from "../types";
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
