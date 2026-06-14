@@ -1,22 +1,9 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import { apiLogin, apiSignup, LoginParams, SignupParams, UserResponse } from "../services/api/endpoints/auth";
+import { apiLogin, apiSignup, apiVerifySupabase, apiForgotPassword, apiResetPassword } from "../services/api/endpoints/auth";
 import { fetchProfile } from "../services/api/endpoints/profile";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
-
-interface AuthState {
-  user: UserResponse | null;
-  accessToken: string | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  error: string | null;
-  
-  initialize: () => Promise<void>;
-  login: (params: LoginParams) => Promise<void>;
-  signup: (params: SignupParams) => Promise<void>;
-  logout: () => Promise<void>;
-  clearError: () => void;
-}
+import { AuthState } from "../types";
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -108,6 +95,33 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
+  loginWithGoogle: async (supabaseToken) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await apiVerifySupabase({ supabaseToken });
+      const { token, user } = response.data;
+
+      if (token) {
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.ACCESS_TOKEN,
+          token,
+          SECURE_STORE_OPTIONS
+        );
+        set({
+          accessToken: token,
+          user,
+          isAuthenticated: true,
+          loading: false,
+        });
+      } else {
+        set({ loading: false });
+      }
+    } catch (err: any) {
+      set({ error: err.message || "Google login failed", loading: false });
+      throw err;
+    }
+  },
+
   logout: async () => {
     try {
       await SecureStore.deleteItemAsync(
@@ -118,6 +132,28 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error("Failed to delete token on logout", err);
     }
     set({ user: null, accessToken: null, isAuthenticated: false });
+  },
+
+  forgotPassword: async (email: string) => {
+    set({ loading: true, error: null });
+    try {
+      await apiForgotPassword(email);
+      set({ loading: false });
+    } catch (err: any) {
+      set({ error: err.message || "Failed to request password reset", loading: false });
+      throw err;
+    }
+  },
+
+  resetPassword: async (email: string, otp: string, newPassword: string) => {
+    set({ loading: true, error: null });
+    try {
+      await apiResetPassword({ email, otp, newPassword });
+      set({ loading: false });
+    } catch (err: any) {
+      set({ error: err.message || "Failed to reset password", loading: false });
+      throw err;
+    }
   },
 
   clearError: () => set({ error: null }),

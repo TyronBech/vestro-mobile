@@ -1,44 +1,5 @@
 import { apiClient } from "../client";
-
-export interface UserResponse {
-  id: string;
-  email: string;
-  firstName: string;
-  middleName?: string | null;
-  lastName: string;
-  suffix?: string | null;
-  avatarUrl?: string | null;
-  currency: string;
-  spendingLimit: number;
-  biometricsEnabled: boolean;
-  panicModeEnabled: boolean;
-  twoFactorEnabled: boolean;
-  lastActiveAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface AuthSuccessPayload {
-  user: UserResponse;
-  token: string;
-  requires2fa?: boolean;
-}
-
-export interface ApiResponse<T> {
-  data: T;
-}
-
-export interface LoginParams {
-  email: string;
-  password?: string;
-}
-
-export interface SignupParams {
-  email: string;
-  password?: string;
-  firstName: string;
-  lastName: string;
-}
+import { ApiResponse, AuthSuccessPayload, LoginParams, SignupParams } from "../../../types";
 
 export const apiLogin = (params: LoginParams) =>
   apiClient<ApiResponse<AuthSuccessPayload>>("/auth/login", {
@@ -48,6 +9,24 @@ export const apiLogin = (params: LoginParams) =>
 
 export const apiSignup = (params: SignupParams) =>
   apiClient<ApiResponse<AuthSuccessPayload>>("/auth/signup", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+
+export const apiVerifySupabase = (params: { supabaseToken: string }) =>
+  apiClient<ApiResponse<AuthSuccessPayload>>("/auth/supabase/verify", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+
+export const apiForgotPassword = (email: string) =>
+  apiClient<ApiResponse<{ success: boolean }>>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+
+export const apiResetPassword = (params: { email: string; otp: string; newPassword?: string }) =>
+  apiClient<ApiResponse<{ success: boolean }>>("/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(params),
   });
