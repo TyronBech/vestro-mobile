@@ -7,6 +7,7 @@ import {
   Dimensions,
   StyleSheet,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -73,6 +74,7 @@ export default function LandingScreen() {
       }} 
       className="justify-between relative overflow-hidden"
     >
+      <StatusBar style="dark" />
       
       {/* 1. TOP HEADER & METADATA */}
       <View className="px-6 pt-4">

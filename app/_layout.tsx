@@ -73,6 +73,7 @@ export default function RootLayout() {
     const inTabsGroup = segments[0] === "(tabs)";
     const onAuthScreens =
       segments[0] === "login" ||
+      segments[0] === "forgot-password" ||
       segments[0] === "index" ||
       !segments[0];
 
@@ -101,6 +102,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
         <Stack.Screen name="google-auth" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ title: "Not found" }} />

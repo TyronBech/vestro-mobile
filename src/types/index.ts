@@ -68,5 +68,7 @@ export interface AuthState {
   signup: (params: SignupParams) => Promise<void>;
   loginWithGoogle: (supabaseToken: string) => Promise<void>;
   logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string, otp: string, newPassword: string) => Promise<void>;
   clearError: () => void;
 }

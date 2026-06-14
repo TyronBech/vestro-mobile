@@ -18,3 +18,15 @@ export const apiVerifySupabase = (params: { supabaseToken: string }) =>
     method: "POST",
     body: JSON.stringify(params),
   });
+
+export const apiForgotPassword = (email: string) =>
+  apiClient<ApiResponse<{ success: boolean }>>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+
+export const apiResetPassword = (params: { email: string; otp: string; newPassword?: string }) =>
+  apiClient<ApiResponse<{ success: boolean }>>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });

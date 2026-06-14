@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import Animated, {
@@ -18,7 +19,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { ArrowLeft, PhilippinePeso } from "lucide-react-native";
+import { ArrowLeft, PhilippinePeso, Lock } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
@@ -62,11 +63,36 @@ export default function LoginScreen() {
   const { login, loginWithGoogle, loading, error, clearError } = useAuthStore();
   const insets = useSafeAreaInsets();
 
-  const [email, setEmail] = useState<string>(Strings.defaultEmail);
-  const [password, setPassword] = useState<string>(Strings.defaultPassword);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState<number>(0);
 
   // Reanimated shared value for card shake
   const shakeOffset = useSharedValue(0);
+
+  // Countdown timer effect for rate limiting
+  useEffect(() => {
+    if (rateLimitTimeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setRateLimitTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          clearError();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [rateLimitTimeLeft, clearError]);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   // Animated style for card (combining rotation and translation)
   const animatedCardStyle = useAnimatedStyle(() => ({
@@ -116,8 +142,10 @@ export default function LoginScreen() {
       try {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       } catch (e) {}
-    } catch (err) {
-      // Error is caught in auth-store, which triggers the error useEffect
+    } catch (err: any) {
+      if (err.status === 429) {
+        setRateLimitTimeLeft(900); // 15 minutes lockout
+      }
     }
   };
 
@@ -178,8 +206,12 @@ export default function LoginScreen() {
       }
     } catch (err: any) {
       console.error("Google OAuth error:", err);
-      useAuthStore.setState({ error: err.message || Strings.googleLoginError });
-      triggerErrorEffects();
+      if (err.status === 429) {
+        setRateLimitTimeLeft(900); // 15 minutes lockout
+      } else {
+        useAuthStore.setState({ error: err.message || Strings.googleLoginError });
+        triggerErrorEffects();
+      }
     }
   };
 
@@ -187,11 +219,8 @@ export default function LoginScreen() {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } catch (e) {}
-    Alert.alert(
-      Strings.resetPasswordTitle,
-      Strings.resetPasswordMessage,
-      [{ text: Strings.ok }]
-    );
+    clearError();
+    router.push("/forgot-password");
   };
 
   const handleBack = () => {
@@ -204,9 +233,10 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={{ flex: 1 }}
     >
+      <StatusBar style="dark" />
       <View 
         style={{ 
           flex: 1, 
@@ -263,8 +293,36 @@ export default function LoginScreen() {
             subtitle={Strings.loginSubtitle}
             variant="dark"
             style={[animatedCardStyle, { width: Sizes.cardWidthLogin }]}
-            className="z-20"
+            className="z-20 relative overflow-hidden"
           >
+            {rateLimitTimeLeft > 0 && (
+              <View 
+                style={{ 
+                  position: "absolute", 
+                  top: 0, 
+                  left: 0, 
+                  right: 0, 
+                  bottom: 0, 
+                  backgroundColor: "#373737", 
+                  zIndex: 50, 
+                  alignItems: "center", 
+                  justifyContent: "center", 
+                  padding: 24,
+                }}
+              >
+                <Lock size={32} stroke={Colors.actionPrimary} strokeWidth={Sizes.strokeThick} className="mb-4" />
+                <Text className="text-actionPrimary text-xs font-bold uppercase tracking-widest mb-1.5">
+                  ACCESS LOCKOUT
+                </Text>
+                <Text className="text-background font-black text-4xl tracking-widest mb-3">
+                  {formatTime(rateLimitTimeLeft)}
+                </Text>
+                <Text className="text-background/60 text-[10px] uppercase font-bold tracking-wider text-center leading-relaxed">
+                  Too many login attempts. Please wait before trying again.
+                </Text>
+              </View>
+            )}
+
             {/* Error Banner */}
             {error && (
               <View className="bg-background rounded-2xl p-4 mb-4">
