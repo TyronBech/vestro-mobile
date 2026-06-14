@@ -11,6 +11,7 @@ import { useAuthStore } from "../../src/store/auth-store";
 import { fetchProfile } from "../../src/services/api/endpoints/profile";
 import { API_BASE_URL } from "../../src/services/api/config";
 import { apiClient } from "../../src/services/api/client";
+import { Colors } from "../../constants/colors";
 
 export default function HomeTabScreen() {
   const { user, logout } = useAuthStore();
@@ -64,21 +65,21 @@ export default function HomeTabScreen() {
 
   if (!user) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#fdfefe", paddingTop: insets.top, paddingBottom: insets.bottom }} className="items-center justify-center">
-        <Text className="text-[#373737] font-semibold text-sm">Loading profile...</Text>
+      <View style={{ flex: 1, backgroundColor: Colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }} className="items-center justify-center">
+        <Text className="text-textPrimary font-semibold text-sm">Loading profile...</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fdfefe", paddingTop: insets.top, paddingBottom: insets.bottom }}>
+    <View style={{ flex: 1, backgroundColor: Colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, padding: 24 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header Title */}
         <View className="items-center mb-8 mt-4">
-          <Text className="text-3xl font-black tracking-widest text-[#373737]">
+          <Text className="text-3xl font-black tracking-widest text-textPrimary">
             VESTRO
           </Text>
           <Text className="text-xs uppercase tracking-widest text-gray-400 mt-1">
@@ -87,9 +88,9 @@ export default function HomeTabScreen() {
         </View>
 
         {/* API Connection Banner */}
-        <View className="mb-6 border border-gray-100 rounded-2xl p-4 bg-[#fdfefe] flex-row items-center justify-between">
+        <View className="mb-6 border border-borderLight rounded-2xl p-4 bg-background flex-row items-center justify-between">
           <View className="flex-1 pr-4">
-            <Text className="text-xs font-bold text-[#373737] uppercase tracking-wider">
+            <Text className="text-xs font-bold text-textPrimary uppercase tracking-wider">
               API Connection
             </Text>
             <Text className="text-xs text-gray-500 mt-0.5" numberOfLines={1} ellipsizeMode="tail">
@@ -98,29 +99,29 @@ export default function HomeTabScreen() {
           </View>
           <TouchableOpacity
             onPress={checkConnection}
-            className="flex-row items-center px-3 py-1.5 rounded-full border border-gray-100 bg-[#fdfefe]"
+            className="flex-row items-center px-3 py-1.5 rounded-full border border-borderLight bg-background"
           >
             <View
               className={`w-2.5 h-2.5 rounded-full mr-2 ${
                 connectionStatus === "connected"
                   ? "bg-emerald-500"
                   : connectionStatus === "disconnected"
-                  ? "bg-[#ee4e43]"
+                  ? "bg-actionPrimary"
                   : "bg-amber-400"
               }`}
             />
-            <Text className="text-xs font-bold text-[#373737] capitalize">
+            <Text className="text-xs font-bold text-textPrimary capitalize">
               {connectionStatus === "checking" ? "Checking..." : connectionStatus}
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Authenticated Profile Card */}
-        <View className="border border-gray-100 rounded-2xl p-6 bg-[#373737]">
-          <Text className="text-[#fdfefe] text-xs font-bold uppercase tracking-widest mb-1">
+        <View className="border border-borderLight rounded-2xl p-6 bg-backgroundDark">
+          <Text className="text-background text-xs font-bold uppercase tracking-widest mb-1">
             Authenticated Profile
           </Text>
-          <Text className="text-[#fdfefe] text-2xl font-bold mb-4">
+          <Text className="text-background text-2xl font-bold mb-4">
             {user.firstName} {user.lastName}
           </Text>
 
@@ -129,7 +130,7 @@ export default function HomeTabScreen() {
               <Text className="text-gray-400 text-xs uppercase tracking-wider">
                 Email Address
               </Text>
-              <Text className="text-[#fdfefe] text-xs font-semibold">
+              <Text className="text-background text-xs font-semibold">
                 {user.email}
               </Text>
             </View>
@@ -138,7 +139,7 @@ export default function HomeTabScreen() {
               <Text className="text-gray-400 text-xs uppercase tracking-wider">
                 Base Currency
               </Text>
-              <Text className="text-[#fdfefe] text-xs font-semibold">
+              <Text className="text-background text-xs font-semibold">
                 {user.currency}
               </Text>
             </View>
@@ -148,7 +149,7 @@ export default function HomeTabScreen() {
                 <Text className="text-gray-400 text-xs uppercase tracking-wider">
                   Spending Limit
                 </Text>
-                <Text className="text-[#fdfefe] text-xs font-semibold">
+                <Text className="text-background text-xs font-semibold">
                   {formatCurrency(user.spendingLimit, user.currency)}
                 </Text>
               </View>
@@ -158,7 +159,7 @@ export default function HomeTabScreen() {
               <Text className="text-gray-400 text-xs uppercase tracking-wider">
                 Security Layer
               </Text>
-              <Text className="text-[#fdfefe] text-xs font-semibold">
+              <Text className="text-background text-xs font-semibold">
                 {user.twoFactorEnabled ? "2FA + " : ""}JWT Authorized
               </Text>
             </View>
@@ -166,9 +167,9 @@ export default function HomeTabScreen() {
 
           <TouchableOpacity
             onPress={handleLogout}
-            className="mt-6 bg-[#ee4e43] rounded-2xl py-3.5 items-center"
+            className="mt-6 bg-actionPrimary rounded-2xl py-3.5 items-center"
           >
-            <Text className="text-[#fdfefe] font-bold text-xs uppercase tracking-wider">
+            <Text className="text-background font-bold text-xs uppercase tracking-wider">
               Disconnect Session
             </Text>
           </TouchableOpacity>

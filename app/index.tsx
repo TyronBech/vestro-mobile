@@ -17,6 +17,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { ArrowDown, Shield, X, PhilippinePeso } from "lucide-react-native";
 import { APP_NAME } from "../src/services/api/config";
+import Card from "../src/components/card";
+import { Colors } from "../constants/colors";
+import { Strings } from "../constants/string";
+import { Sizes } from "../constants/sizes";
 
 const { width } = Dimensions.get("window");
 
@@ -26,7 +30,7 @@ export default function LandingScreen() {
   
   // Reanimated values for Bottom Sheet / Info Modal
   const isSheetOpen = useSharedValue(false);
-  const sheetTranslateY = useSharedValue(500);
+  const sheetTranslateY = useSharedValue<number>(Sizes.sheetTranslateYClosed);
 
   const handleEnter = () => {
     try {
@@ -45,7 +49,7 @@ export default function LandingScreen() {
     }
     
     if (isSheetOpen.value) {
-      sheetTranslateY.value = withTiming(500, { duration: 350 });
+      sheetTranslateY.value = withTiming(Sizes.sheetTranslateYClosed, { duration: 350 });
       isSheetOpen.value = false;
     } else {
       sheetTranslateY.value = withTiming(0, { duration: 350 });
@@ -63,9 +67,9 @@ export default function LandingScreen() {
     <View 
       style={{ 
         flex: 1, 
-        backgroundColor: "#fdfefe", 
+        backgroundColor: Colors.background, 
         paddingTop: insets.top, 
-        paddingBottom: Math.max(insets.bottom, 16) 
+        paddingBottom: Math.max(insets.bottom, Sizes.safeAreaBottomMin) 
       }} 
       className="justify-between relative overflow-hidden"
     >
@@ -73,23 +77,26 @@ export default function LandingScreen() {
       {/* 1. TOP HEADER & METADATA */}
       <View className="px-6 pt-4">
         <View className="flex-row justify-between items-center mb-2">
-          <PhilippinePeso size={15} strokeWidth={2.5} stroke="#373737" />
+          <PhilippinePeso size={Sizes.iconMini} strokeWidth={Sizes.strokeMedium} stroke={Colors.textPrimary} />
           <View className="flex-row items-center space-x-2">
-            <Text className="text-xs font-bold text-[#373737] tracking-widest uppercase">EN</Text>
-            <View className="w-1.5 h-1.5 ml-2 rounded-full bg-[#ee4e43]" />
+            <Text className="text-xs font-bold text-textPrimary tracking-widest uppercase">{Strings.languageCode}</Text>
+            <View 
+              style={{ width: Sizes.headerDotSize, height: Sizes.headerDotSize, borderRadius: Sizes.headerDotSize / 2 }} 
+              className="ml-2 rounded-full bg-actionPrimary" 
+            />
           </View>
         </View>
         
         {/* Horizontal Divider Line */}
-        <View className="h-[1px] bg-gray-100 w-full mb-2" />
+        <View style={{ height: Sizes.dividerHeight }} className="bg-gray-100 w-full mb-2" />
         
         {/* Micro Labels */}
         <View className="flex-row justify-between mt-1.5">
           <Text className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold">
-            DESIGN BY TYRON BECHAYDA
+            {Strings.designerCredit}
           </Text>
           <Text className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold">
-            FREEDOM ENGINE V1.0.0
+            {Strings.engineVersion}
           </Text>
         </View>
       </View>
@@ -100,39 +107,37 @@ export default function LandingScreen() {
         {/* Track indicator decoration on the right edge */}
         <View className="absolute right-6 top-1/2 flex-col items-center space-y-4 h-36">
           <Text className="relative text-[10px] top-[20%] font-bold text-gray-400 rotate-90 transform origin-left">
-            11 / 12
+            {Strings.pageIndicator}
           </Text>
           <View className="w-[2px] top-1/3 h-16 bg-gray-100 relative">
-            <View className="absolute top-0 left-0 w-full h-1/2 bg-[#373737]" />
+            <View className="absolute top-0 left-0 w-full h-1/2 bg-backgroundDark" />
           </View>
         </View>
 
         {/* Overlapping Red Box Behind Dollar (positioned in the top-right) */}
-        <View 
-          className="absolute bg-[#ee4e43] rounded-2xl p-6 w-[70%] right-6 z-0"
+        <Card
+          title={APP_NAME}
+          subtitle={Strings.landingSubtitle}
+          variant="accent"
+          className="absolute right-6 z-0"
+          titleClassName="text-4xl"
+          subtitleClassName="text-xs mb-4"
           style={{
-            shadowColor: "transparent", // strictly flat minimalism
             transform: [{ rotate: "3deg" }],
             top: "12%",
+            width: Sizes.cardWidthLanding
           }}
         >
-          <Text className="text-[#fdfefe] font-black text-4xl tracking-tighter leading-none mb-1">
-            {APP_NAME.toUpperCase()}
-          </Text>
-          <Text className="text-[#fdfefe]/90 text-xs font-bold uppercase tracking-widest mb-4">
-            Financial tracker
-          </Text>
-          
           {/* Enter Button inside the block container */}
           <TouchableOpacity
             onPress={handleEnter}
-            className="bg-[#373737] rounded-2xl py-3 px-4 items-center flex-row justify-center mt-2"
+            className="bg-backgroundDark rounded-2xl py-3 px-4 items-center flex-row justify-center mt-2"
           >
-            <Text className="text-[#fdfefe] font-black text-xs uppercase tracking-widest">
-              LOGIN
+            <Text className="text-background font-black text-xs uppercase tracking-widest">
+              {Strings.loginButtonText}
             </Text>
           </TouchableOpacity>
-        </View>
+        </Card>
 
         {/* 3D Dollar Asset Image (static, in front of the red box) */}
         <View pointerEvents="none" className="z-10" style={{ transform: [{ translateY: 20 }] }}>
@@ -147,15 +152,15 @@ export default function LandingScreen() {
         </View>
         {/* Money growth tag line */}
         <View className="flex-col mt-5 items-center justify-center">
-          <Text className="text-[#373737] text-xs font-bold text-center tracking-widest mb-1">That small money you got.</Text>
-          <Text className="text-[#373737] text-xs font-bold text-center tracking-widest">Can compound into something bigger.</Text>
+          <Text className="text-textPrimary text-xs font-bold text-center tracking-widest mb-1">{Strings.taglineLine1}</Text>
+          <Text className="text-textPrimary text-xs font-bold text-center tracking-widest">{Strings.taglineLine2}</Text>
         </View>
       </View>
 
       {/* 3. BOTTOM FOOTER */}
       <View className="px-6 pb-6 flex-row justify-between items-end">
         <View>
-          <Text className="text-[#373737] font-black text-6xl tracking-tighter leading-none">
+          <Text className="text-textPrimary font-black text-6xl tracking-tighter leading-none">
             {APP_NAME.toLowerCase()}.
           </Text>
         </View>
@@ -163,10 +168,14 @@ export default function LandingScreen() {
         {/* Red Square with Arrow Down Button */}
         <TouchableOpacity
           onPress={toggleInfoSheet}
-          className="bg-[#ee4e43] rounded-2xl w-14 h-14 items-center justify-center"
-          style={{ shadowColor: "transparent" }}
+          className="bg-actionPrimary rounded-2xl items-center justify-center"
+          style={{ 
+            width: Sizes.bottomButtonSize, 
+            height: Sizes.bottomButtonSize,
+            shadowColor: "transparent" 
+          }}
         >
-          <ArrowDown stroke="#fdfefe" size={24} strokeWidth={3} />
+          <ArrowDown stroke={Colors.background} size={Sizes.iconLarge} strokeWidth={Sizes.strokeThick} />
         </TouchableOpacity>
       </View>
 
@@ -177,64 +186,72 @@ export default function LandingScreen() {
       >
         <View className="flex-row justify-between items-center mb-6">
           <View className="flex-row items-center space-x-2">
-            <Shield stroke="#ee4e43" size={20} strokeWidth={2.5} />
-            <Text className="text-[#373737] text-lg font-black ml-1 tracking-tight">
-              {APP_NAME.toUpperCase()} SECURITY PROTOCOLS
+            <Shield stroke={Colors.actionPrimary} size={Sizes.iconMedium} strokeWidth={Sizes.strokeMedium} />
+            <Text className="text-textPrimary text-lg font-black ml-1 tracking-tight">
+              {APP_NAME.toUpperCase()}{Strings.securityProtocolsSuffix}
             </Text>
           </View>
           <TouchableOpacity 
             onPress={toggleInfoSheet}
-            className="p-1 rounded-full bg-[#373737]/50"
+            className="p-1 rounded-full bg-backgroundDark/50"
           >
-            <X stroke="#fdfefe" size={18} strokeWidth={2.5} />
+            <X stroke={Colors.background} size={Sizes.iconSmall} strokeWidth={Sizes.strokeMedium} />
           </TouchableOpacity>
         </View>
 
         <View className="space-y-4">
           <View className="flex-row items-start mb-4">
-            <View className="bg-[#ee4e43]/20 rounded-xl p-2 mr-3">
-              <View className="w-2 h-2 rounded-full bg-[#ee4e43]" />
+            <View className="bg-actionPrimary/20 rounded-xl p-2 mr-3">
+              <View 
+                style={{ width: Sizes.securityDotSize, height: Sizes.securityDotSize }} 
+                className="rounded-full bg-actionPrimary" 
+              />
             </View>
             <View className="flex-1">
-              <Text className="text-[#373737] text-sm font-bold uppercase tracking-wider">
-                15m Inactivity Lock
+              <Text className="text-textPrimary text-sm font-bold uppercase tracking-wider">
+                {Strings.securityInactivityTitle}
               </Text>
-              <Text className="text-[#373737]/70 text-xs mt-0.5 leading-relaxed">
-                App locks securely after 15 minutes of inactivity, requiring biometric or passcode verification.
+              <Text className="text-textPrimary/70 text-xs mt-0.5 leading-relaxed">
+                {Strings.securityInactivityDesc}
               </Text>
             </View>
           </View>
 
           <View className="flex-row items-start mb-4">
-            <View className="bg-[#ee4e43]/20 rounded-xl p-2 mr-3">
-              <View className="w-2 h-2 rounded-full bg-[#ee4e43]" />
+            <View className="bg-actionPrimary/20 rounded-xl p-2 mr-3">
+              <View 
+                style={{ width: Sizes.securityDotSize, height: Sizes.securityDotSize }} 
+                className="rounded-full bg-actionPrimary" 
+              />
             </View>
             <View className="flex-1">
-              <Text className="text-[#373737] text-sm font-bold uppercase tracking-wider">
-                Biometric Gate
+              <Text className="text-textPrimary text-sm font-bold uppercase tracking-wider">
+                {Strings.securityBiometricTitle}
               </Text>
-              <Text className="text-[#373737]/70 text-xs mt-0.5 leading-relaxed">
-                Biometric credentials are encrypted and stored in the secure enclave, never on public servers.
+              <Text className="text-textPrimary/70 text-xs mt-0.5 leading-relaxed">
+                {Strings.securityBiometricDesc}
               </Text>
             </View>
           </View>
 
           <View className="flex-row items-start">
-            <View className="bg-[#ee4e43]/20 rounded-xl p-2 mr-3">
-              <View className="w-2 h-2 rounded-full bg-[#ee4e43]" />
+            <View className="bg-actionPrimary/20 rounded-xl p-2 mr-3">
+              <View 
+                style={{ width: Sizes.securityDotSize, height: Sizes.securityDotSize }} 
+                className="rounded-full bg-actionPrimary" 
+              />
             </View>
             <View className="flex-1">
-              <Text className="text-[#373737] text-sm font-bold uppercase tracking-wider">
-                Panic Mode (Shake-to-Lock)
+              <Text className="text-textPrimary text-sm font-bold uppercase tracking-wider">
+                {Strings.securityPanicTitle}
               </Text>
-              <Text className="text-[#373737]/70 text-xs mt-0.5 leading-relaxed">
-                A sudden physical shake of the mobile device immediately invalidates the active session and locks all entry.
+              <Text className="text-textPrimary/70 text-xs mt-0.5 leading-relaxed">
+                {Strings.securityPanicDesc}
               </Text>
             </View>
           </View>
         </View>
       </Animated.View>
-
     </View>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, View, Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuthStore } from "../src/store/auth-store";
+import { Colors } from "../constants/colors";
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
@@ -41,9 +42,9 @@ export default function RootLayout() {
 
   if (!isReady) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#fdfefe", justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#373737" />
-        <Text style={{ marginTop: 16, color: "#373737", fontWeight: "700", fontSize: 12, letterSpacing: 2 }}>
+      <View style={{ flex: 1, backgroundColor: Colors.background, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color={Colors.backgroundDark} />
+        <Text style={{ marginTop: 16, color: Colors.textPrimary, fontWeight: "700", fontSize: 12, letterSpacing: 2 }}>
           INITIALIZING VESTRO
         </Text>
       </View>
