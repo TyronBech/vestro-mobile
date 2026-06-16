@@ -12,13 +12,21 @@ import { fetchProfile } from "../../src/services/api/endpoints/profile";
 import { API_BASE_URL } from "../../src/services/api/config";
 import { apiClient } from "../../src/services/api/client";
 import { Colors } from "../../constants/colors";
+import { CreditCard, Eye, EyeOff, Activity, ArrowRight } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
 export default function HomeTabScreen() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [connectionStatus, setConnectionStatus] = useState<
     "checking" | "connected" | "disconnected"
   >("checking");
+  const [showBalance, setShowBalance] = useState(true);
+
+  // Mock ledger data (Cents Rule: ₱425,000.00 is stored as 42500000)
+  const balanceCents = 42500000; 
+  const monthlyBudgetLimitCents = user?.spendingLimit ?? 5000000; 
 
   // Check backend server connectivity
   const checkConnection = useCallback(async () => {
@@ -31,7 +39,6 @@ export default function HomeTabScreen() {
       }
       setConnectionStatus("connected");
     } catch (err: any) {
-      // If we get a 401 response, it means the API is reachable but we aren't logged in
       if (err.kind === "http" && err.status === 401) {
         setConnectionStatus("connected");
       } else {
@@ -40,21 +47,19 @@ export default function HomeTabScreen() {
     }
   }, []);
 
-  // Check connection on mount
   useEffect(() => {
     checkConnection();
   }, [checkConnection]);
 
-  const handleLogout = async () => {
+  const toggleBalanceVisibility = async () => {
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (e) {
       console.log("Haptics ignored:", e);
     }
-    await logout();
+    setShowBalance(!showBalance);
   };
 
-  // Format money from cents to base (e.g., 5000000 -> 50,000.00)
   const formatCurrency = (amountInCents: number, currencyCode: string) => {
     const baseAmount = amountInCents / 100;
     return new Intl.NumberFormat("en-PH", {
@@ -74,7 +79,7 @@ export default function HomeTabScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, padding: 24 }}
+        contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header Title */}
@@ -116,62 +121,57 @@ export default function HomeTabScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Authenticated Profile Card */}
-        <View className="border border-borderLight rounded-2xl p-6 bg-backgroundDark">
-          <Text className="text-background text-xs font-bold uppercase tracking-widest mb-1">
-            Authenticated Profile
-          </Text>
-          <Text className="text-background text-2xl font-bold mb-4">
-            {user.firstName} {user.lastName}
-          </Text>
-
-          <View className="border-t border-gray-600/40 pt-4 space-y-3">
-            <View className="flex-row justify-between mb-2">
-              <Text className="text-gray-400 text-xs uppercase tracking-wider">
-                Email Address
-              </Text>
-              <Text className="text-background text-xs font-semibold">
-                {user.email}
+        {/* Balance Card */}
+        <View className="border border-borderLight rounded-2xl p-6 bg-backgroundDark mb-6">
+          <View className="flex-row justify-between items-center mb-4">
+            <View className="flex-row items-center">
+              <CreditCard size={18} stroke={Colors.background} strokeWidth={2.5} />
+              <Text className="text-background text-[11px] font-bold uppercase tracking-widest ml-2">
+                Available Balance
               </Text>
             </View>
-
-            <View className="flex-row justify-between mb-2">
-              <Text className="text-gray-400 text-xs uppercase tracking-wider">
-                Base Currency
-              </Text>
-              <Text className="text-background text-xs font-semibold">
-                {user.currency}
-              </Text>
-            </View>
-
-            {user.spendingLimit !== undefined && (
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-400 text-xs uppercase tracking-wider">
-                  Spending Limit
-                </Text>
-                <Text className="text-background text-xs font-semibold">
-                  {formatCurrency(user.spendingLimit, user.currency)}
-                </Text>
-              </View>
-            )}
-
-            <View className="flex-row justify-between">
-              <Text className="text-gray-400 text-xs uppercase tracking-wider">
-                Security Layer
-              </Text>
-              <Text className="text-background text-xs font-semibold">
-                {user.twoFactorEnabled ? "2FA + " : ""}JWT Authorized
-              </Text>
-            </View>
+            <TouchableOpacity onPress={toggleBalanceVisibility}>
+              {showBalance ? (
+                <Eye size={18} stroke={Colors.background} strokeWidth={2} />
+              ) : (
+                <EyeOff size={18} stroke={Colors.background} strokeWidth={2} />
+              )}
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            onPress={handleLogout}
-            className="mt-6 bg-actionPrimary rounded-2xl py-3.5 items-center"
-          >
-            <Text className="text-background font-bold text-xs uppercase tracking-wider">
-              Disconnect Session
+          <Text className="text-background text-3xl font-black mb-4">
+            {showBalance ? formatCurrency(balanceCents, user.currency) : "••••••••"}
+          </Text>
+
+          <Text className="text-gray-400 text-xs uppercase tracking-wider">
+            Spending Limit: {formatCurrency(monthlyBudgetLimitCents, user.currency)}
+          </Text>
+        </View>
+
+        {/* Quick Insights Card */}
+        <View className="border border-borderLight rounded-2xl p-6 bg-background mb-6">
+          <View className="flex-row items-center mb-4">
+            <Activity size={18} stroke={Colors.textPrimary} strokeWidth={2.5} />
+            <Text className="text-textPrimary text-xs font-bold uppercase tracking-widest ml-2">
+              Dashboard Insights
             </Text>
+          </View>
+          
+          <Text className="text-textPrimary text-sm font-semibold mb-2">
+            Welcome back, {user.firstName}!
+          </Text>
+          <Text className="text-gray-500 text-xs leading-relaxed mb-4">
+            Your ledger is healthy. You have saved 57% of your target milestones. Go to Analytics to see detailed charts.
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/analytics")}
+            className="flex-row items-center justify-between border-t border-gray-100 pt-3"
+          >
+            <Text className="text-actionPrimary text-xs font-bold uppercase tracking-wider">
+              View Analytics
+            </Text>
+            <ArrowRight size={14} stroke={Colors.actionPrimary} strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
       </ScrollView>
