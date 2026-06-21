@@ -60,11 +60,11 @@ export default function HomeTabScreen() {
     setShowBalance(!showBalance);
   };
 
-  const formatCurrency = (amountInCents: number, currencyCode: string) => {
+  const formatCurrency = (amountInCents: number, currencyCode?: string | null) => {
     const baseAmount = amountInCents / 100;
     return new Intl.NumberFormat("en-PH", {
       style: "currency",
-      currency: currencyCode,
+      currency: currencyCode || "PHP",
     }).format(baseAmount);
   };
 
@@ -158,7 +158,7 @@ export default function HomeTabScreen() {
           </View>
           
           <Text className="text-textPrimary text-sm font-semibold mb-2">
-            Welcome back, {user.firstName}!
+            Welcome back, {user.name || "User"}!
           </Text>
           <Text className="text-gray-500 text-xs leading-relaxed mb-4">
             Your ledger is healthy. You have saved 57% of your target milestones. Go to Analytics to see detailed charts.

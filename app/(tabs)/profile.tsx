@@ -19,11 +19,11 @@ export default function ProfileScreen() {
     await logout();
   };
 
-  const formatCurrency = (amountInCents: number, currencyCode: string) => {
+  const formatCurrency = (amountInCents: number, currencyCode?: string | null) => {
     const baseAmount = amountInCents / 100;
     return new Intl.NumberFormat("en-PH", {
       style: "currency",
-      currency: currencyCode,
+      currency: currencyCode || "PHP",
     }).format(baseAmount);
   };
 
@@ -60,7 +60,7 @@ export default function ProfileScreen() {
             Authenticated Profile
           </Text>
           <Text className="text-background text-2xl font-bold">
-            {user.firstName} {user.lastName}
+            {user.name || "User"}
           </Text>
         </View>
 
@@ -86,11 +86,11 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <Text className="text-textPrimary text-xs font-semibold">
-              {user.currency}
+              {user.currency || "PHP"}
             </Text>
           </View>
 
-          {user.spendingLimit !== undefined && (
+          {user.spendingLimit !== undefined && user.spendingLimit !== null && (
             <View className="flex-row items-center justify-between border-b border-gray-100 pb-3 mb-3">
               <View className="flex-row items-center">
                 <DollarSign size={16} stroke={Colors.textSecondary} strokeWidth={2.5} />
@@ -112,7 +112,7 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <Text className="text-textPrimary text-xs font-semibold">
-              {user.twoFactorEnabled ? "2FA + " : ""}JWT Authorized
+              {user.is2FAEnabled ? "2FA + " : ""}JWT Authorized
             </Text>
           </View>
         </View>

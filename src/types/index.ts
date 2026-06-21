@@ -1,17 +1,14 @@
 export interface UserResponse {
   id: string;
   email: string;
-  firstName: string;
-  middleName?: string | null;
-  lastName: string;
-  suffix?: string | null;
+  name?: string | null;
   avatarUrl?: string | null;
-  currency: string;
-  spendingLimit: number;
+  currency?: string | null;
+  spendingLimit?: number | null;
   biometricsEnabled: boolean;
   panicModeEnabled: boolean;
-  twoFactorEnabled: boolean;
-  lastActiveAt?: string;
+  is2FAEnabled: boolean;
+  lastActiveAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -19,19 +16,16 @@ export interface UserResponse {
 export interface ProfileResponse {
   id: string;
   email: string;
-  firstName: string;
-  middleName?: string | null;
-  lastName: string;
-  suffix?: string | null;
+  name?: string | null;
   avatarUrl?: string | null;
-  currency: string;
-  spendingLimit: number;
+  currency?: string | null;
+  spendingLimit?: number | null;
   biometricsEnabled: boolean;
   panicModeEnabled: boolean;
-  twoFactorEnabled: boolean;
-  lastActiveAt: string;
-  createdAt: string;
-  updatedAt: string;
+  is2FAEnabled: boolean;
+  lastActiveAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthSuccessPayload {
@@ -52,8 +46,7 @@ export interface LoginParams {
 export interface SignupParams {
   email: string;
   password?: string;
-  firstName: string;
-  lastName: string;
+  name: string;
 }
 
 export interface AuthState {

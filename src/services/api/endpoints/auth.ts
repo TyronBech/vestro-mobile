@@ -25,7 +25,7 @@ export const apiForgotPassword = (email: string) =>
     body: JSON.stringify({ email }),
   });
 
-export const apiResetPassword = (params: { email: string; otp: string; newPassword?: string }) =>
+export const apiResetPassword = (params: { email: string; otp: string; newPassword: string }) =>
   apiClient<ApiResponse<{ success: boolean }>>("/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(params),
