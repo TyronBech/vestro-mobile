@@ -7,6 +7,8 @@ import * as Linking from "expo-linking";
 import { useAuthStore } from "../src/store/auth-store";
 import { Colors } from "../constants/colors";
 
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
   const { isAuthenticated } = useAuthStore();
@@ -98,15 +100,17 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
-        <Stack.Screen name="google-auth" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
-      </Stack>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+          <Stack.Screen name="google-auth" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
+        </Stack>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
