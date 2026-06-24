@@ -19,7 +19,7 @@ import * as Haptics from "expo-haptics";
 import {
   Home,
   BarChart3,
-  Goal,
+  ChartNetwork,
   CircleUserRound,
   Plus,
   PlusCircle,
@@ -294,9 +294,9 @@ export default function CustomTabBar({
                     fill="transparent"
                   />
                 );
-              case "goals":
+              case "network":
                 return (
-                  <Goal
+                  <ChartNetwork
                     size={20}
                     stroke={color}
                     strokeWidth={2.5}

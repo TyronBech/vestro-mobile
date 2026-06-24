@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import { apiLogin, apiSignup, apiVerifySupabase, apiForgotPassword, apiResetPassword } from "../services/api/endpoints/auth";
-import { apiLogin, apiSignup, apiVerifySupabase, apiForgotPassword, apiResetPassword } from "../services/api/endpoints/auth";
 import { fetchProfile } from "../services/api/endpoints/profile";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
 import { AuthState } from "../types";
@@ -146,28 +145,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error("Failed to delete token on logout", err);
     }
     set({ user: null, accessToken: null, isAuthenticated: false });
-  },
-
-  forgotPassword: async (email: string) => {
-    set({ loading: true, error: null });
-    try {
-      await apiForgotPassword(email);
-      set({ loading: false });
-    } catch (err: any) {
-      set({ error: err.message || "Failed to request password reset", loading: false });
-      throw err;
-    }
-  },
-
-  resetPassword: async (email: string, otp: string, newPassword: string) => {
-    set({ loading: true, error: null });
-    try {
-      await apiResetPassword({ email, otp, newPassword });
-      set({ loading: false });
-    } catch (err: any) {
-      set({ error: err.message || "Failed to reset password", loading: false });
-      throw err;
-    }
   },
 
   forgotPassword: async (email: string) => {
