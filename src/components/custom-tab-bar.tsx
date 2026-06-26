@@ -25,8 +25,10 @@ import {
   PlusCircle,
   ArrowUpRight,
   TrendingUp,
+  Sliders,
 } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
+import { useUIStore } from "../store/ui-store";
 
 const UserIcon = ({ color, filled }: { color: string; filled: boolean }) => {
   if (filled) {
@@ -71,6 +73,16 @@ export default function CustomTabBar({
       console.log("Haptics ignored:", e);
     }
     setIsOpen(!isOpen);
+  };
+
+  const handleBudgetConfigPress = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {
+      console.log("Haptics ignored:", e);
+    }
+    setIsOpen(false);
+    useUIStore.getState().openBudgetModal();
   };
 
   const handleAction = async (actionName: string) => {
@@ -159,20 +171,20 @@ export default function CustomTabBar({
         }}
         pointerEvents="box-none"
       >
-        {/* Left: Add Income */}
+        {/* Left: Modify Budget Configuration */}
         <Animated.View
           style={[styles.bubbleWrapper, leftBubbleStyle]}
           pointerEvents={isOpen ? "auto" : "none"}
         >
           <TouchableOpacity
-            onPress={() => handleAction("Add Income")}
+            onPress={handleBudgetConfigPress}
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
             style={{ backgroundColor: Colors.backgroundDark }}
           >
-            <PlusCircle size={20} stroke={Colors.background} strokeWidth={2.5} />
+            <Sliders size={20} stroke={Colors.background} strokeWidth={2.5} />
           </TouchableOpacity>
           <Text className="text-textPrimary font-black text-[9px] uppercase tracking-wider mt-1 text-center">
-            Income
+            Budget Config
           </Text>
         </Animated.View>
 

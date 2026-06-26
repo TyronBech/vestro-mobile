@@ -112,7 +112,7 @@ export default function HomeTabScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 120 }}
+        contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 64 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header Title */}

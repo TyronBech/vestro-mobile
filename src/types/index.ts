@@ -65,3 +65,40 @@ export interface AuthState {
   resetPassword: (email: string, otp: string, newPassword: string) => Promise<void>;
   clearError: () => void;
 }
+
+export interface NetWorthDataPoint {
+  month: string;
+  balance: number; // in cents
+}
+
+export interface CashFlowDataPoint {
+  month: string;
+  inflow: number; // in cents
+  outflow: number; // in cents
+}
+
+export interface CoreNetworkBalance {
+  id: string;
+  name: string;
+  type: string;
+  balance: number; // in cents
+  colorCode: string;
+  bankName: string;
+}
+
+export interface BudgetConfig {
+  netSalary: number;
+  needsRate: number;
+  wantsRate: number;
+  savingsRate: number;
+  investmentsRate: number;
+}
+
+export interface AnalyticsData {
+  totalSavings: number;
+  totalInvestments: number;
+  netWorthTrend: NetWorthDataPoint[];
+  cashFlowTrend: CashFlowDataPoint[];
+  coreNetworkBalances: CoreNetworkBalance[];
+  budgetConfig: BudgetConfig | null;
+}
