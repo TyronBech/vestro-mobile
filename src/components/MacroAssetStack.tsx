@@ -52,7 +52,7 @@ function AssetIcon({ url }: { url: string | null }) {
   return (
     <Image
       source={{ uri: url }}
-      style={{ height: 18, aspectRatio: aspectRatio || 1, borderRadius: 4 }}
+      style={{ height: 18, aspectRatio: aspectRatio || 1 }}
       resizeMode="contain"
       onError={() => setError(true)}
     />

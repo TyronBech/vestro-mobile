@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
@@ -35,7 +36,7 @@ const MOCK_CASHFLOWS: CashFlow[] = [
 ];
 
 export default function HomeTabScreen() {
-  const { user } = useAuthStore();
+  const { user, refreshProfile } = useAuthStore();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [connectionStatus, setConnectionStatus] = useState<
@@ -44,6 +45,7 @@ export default function HomeTabScreen() {
   const [showBalance, setShowBalance] = useState(true);
   const [macroAssets, setMacroAssets] = useState<MacroAsset[]>([]);
   const [cashFlows, setCashFlows] = useState<CashFlow[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Mock ledger data (Cents Rule: ₱425,000.00 is stored as 42500000)
   const balanceCents = 42500000; 
@@ -54,7 +56,7 @@ export default function HomeTabScreen() {
     setConnectionStatus("checking");
     try {
       if (useAuthStore.getState().isAuthenticated) {
-        await fetchProfile();
+        await refreshProfile();
         const assetsRes = await fetchMacroAssets();
         if (assetsRes.ok) {
           setMacroAssets(assetsRes.value);
@@ -74,7 +76,37 @@ export default function HomeTabScreen() {
         setConnectionStatus("disconnected");
       }
     }
-  }, []);
+  }, [refreshProfile]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    try {
+      if (useAuthStore.getState().isAuthenticated) {
+        await refreshProfile();
+        const assetsRes = await fetchMacroAssets();
+        if (assetsRes.ok) {
+          setMacroAssets(assetsRes.value);
+        }
+        const flowsRes = await fetchCashFlows();
+        if (flowsRes.ok) {
+          setCashFlows(flowsRes.value.slice(0, 5));
+        }
+      }
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (e) {}
+    } catch (err) {
+      console.error("Home screen refresh failed:", err);
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      } catch (e) {}
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshProfile]);
 
   useEffect(() => {
     checkConnection();
@@ -114,6 +146,14 @@ export default function HomeTabScreen() {
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 64 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.actionPrimary}
+            colors={[Colors.actionPrimary]}
+          />
+        }
       >
         {/* Header Title */}
         <View className="flex-row items-center justify-between mb-5">

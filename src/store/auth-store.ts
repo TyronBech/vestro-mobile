@@ -169,5 +169,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
+  refreshProfile: async () => {
+    try {
+      const response = await fetchProfile();
+      set({ user: response.data });
+    } catch (err: any) {
+      console.error("Failed to refresh profile in auth store", err);
+      throw err;
+    }
+  },
+
   clearError: () => set({ error: null }),
 }));

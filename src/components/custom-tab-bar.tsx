@@ -85,14 +85,24 @@ export default function CustomTabBar({
     useUIStore.getState().openBudgetModal();
   };
 
-  const handleAction = async (actionName: string) => {
+  const handleMacroAssetPress = async () => {
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (e) {
       console.log("Haptics ignored:", e);
     }
     setIsOpen(false);
-    Alert.alert("Action Triggered", `${actionName} action selected.`);
+    useUIStore.getState().openMacroAssetModal();
+  };
+
+  const handleCoreNetworkPress = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {
+      console.log("Haptics ignored:", e);
+    }
+    setIsOpen(false);
+    useUIStore.getState().openCoreNetworkModal();
   };
 
   // Animated styles for the fanned-out bubble buttons (arc positioning)
@@ -188,37 +198,37 @@ export default function CustomTabBar({
           </Text>
         </Animated.View>
 
-        {/* Center: Add Expense */}
+        {/* Center: Add Macro Asset */}
         <Animated.View
           style={[styles.bubbleWrapper, centerBubbleStyle]}
           pointerEvents={isOpen ? "auto" : "none"}
         >
           <TouchableOpacity
-            onPress={() => handleAction("Add Expense")}
+            onPress={handleMacroAssetPress}
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
             style={{ backgroundColor: Colors.actionPrimary }}
           >
             <ArrowUpRight size={20} stroke={Colors.background} strokeWidth={2.5} />
           </TouchableOpacity>
           <Text className="text-textPrimary font-black text-[9px] uppercase tracking-wider mt-1 text-center">
-            Expense
+            Macro Asset
           </Text>
         </Animated.View>
 
-        {/* Right: Add Savings/Investment */}
+        {/* Right: Add Network */}
         <Animated.View
           style={[styles.bubbleWrapper, rightBubbleStyle]}
           pointerEvents={isOpen ? "auto" : "none"}
         >
           <TouchableOpacity
-            onPress={() => handleAction("Add Savings/Investment")}
+            onPress={handleCoreNetworkPress}
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
             style={{ backgroundColor: Colors.backgroundDark }}
           >
-            <TrendingUp size={20} stroke={Colors.background} strokeWidth={2.5} />
+            <ChartNetwork size={20} stroke={Colors.background} strokeWidth={2.5} />
           </TouchableOpacity>
           <Text className="text-textPrimary font-black text-[9px] uppercase tracking-wider mt-1 text-center">
-            Savings
+            Network
           </Text>
         </Animated.View>
       </View>
