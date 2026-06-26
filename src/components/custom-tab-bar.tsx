@@ -193,7 +193,10 @@ export default function CustomTabBar({
           >
             <Sliders size={20} stroke={Colors.background} strokeWidth={2.5} />
           </TouchableOpacity>
-          <Text className="text-textPrimary font-black text-[9px] uppercase tracking-wider mt-1 text-center">
+          <Text
+            style={styles.bubbleText}
+            className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
+          >
             Budget Config
           </Text>
         </Animated.View>
@@ -210,7 +213,10 @@ export default function CustomTabBar({
           >
             <ArrowUpRight size={20} stroke={Colors.background} strokeWidth={2.5} />
           </TouchableOpacity>
-          <Text className="text-textPrimary font-black text-[9px] uppercase tracking-wider mt-1 text-center">
+          <Text
+            style={styles.bubbleText}
+            className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
+          >
             Macro Asset
           </Text>
         </Animated.View>
@@ -227,7 +233,10 @@ export default function CustomTabBar({
           >
             <ChartNetwork size={20} stroke={Colors.background} strokeWidth={2.5} />
           </TouchableOpacity>
-          <Text className="text-textPrimary font-black text-[9px] uppercase tracking-wider mt-1 text-center">
+          <Text
+            style={styles.bubbleText}
+            className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
+          >
             Network
           </Text>
         </Animated.View>
@@ -394,5 +403,11 @@ const styles = StyleSheet.create({
     top: -40,
     alignItems: "center",
     justifyContent: "center",
+  },
+  bubbleText: {
+    color: "#ffffff",
+    textShadowColor: "rgba(0, 0, 0, 1)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 5,
   },
 });
