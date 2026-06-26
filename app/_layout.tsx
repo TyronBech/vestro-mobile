@@ -6,6 +6,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Linking from "expo-linking";
 import { useAuthStore } from "../src/store/auth-store";
 import { Colors } from "../constants/colors";
+import Toast from "../src/components/toast";
+import BudgetConfigModal from "../src/components/budget-config-modal";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -110,6 +112,8 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
         </Stack>
+        <Toast />
+        <BudgetConfigModal />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
