@@ -1,21 +1,8 @@
 import { apiClient } from '../client';
 import { Result, ok, err } from '../../../utils/result';
+import { CashFlow } from '../../../types';
 
-export interface CashFlow {
-  id: string;
-  userId: string;
-  coreNetworkId: string;
-  amount: number; // raw positive amount in cents
-  type: 'INFLOW' | 'OUTFLOW';
-  notes: string | null;
-  createdAt: string;
-  updatedAt: string;
-  coreNetwork?: {
-    id: string;
-    name: string;
-    balance: number;
-  };
-}
+export { CashFlow } from '../../../types';
 
 export async function fetchCashFlows(): Promise<Result<CashFlow[], string>> {
   try {

@@ -8,6 +8,8 @@ import { useAuthStore } from "../src/store/auth-store";
 import { Colors } from "../constants/colors";
 import Toast from "../src/components/toast";
 import BudgetConfigModal from "../src/components/budget-config-modal";
+import MacroAssetModal from "../src/components/macro-asset-modal";
+import CoreNetworkModal from "../src/components/core-network-modal";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -114,6 +116,8 @@ export default function RootLayout() {
         </Stack>
         <Toast />
         <BudgetConfigModal />
+        <MacroAssetModal />
+        <CoreNetworkModal />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

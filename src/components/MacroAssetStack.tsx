@@ -27,6 +27,10 @@ const TRANSITION_MS = 300;
 const FADE_MS = 350;
 const FADE_DELAY_MS = 100;
 
+const MAX_VISIBLE = 4;
+const Y_OFFSET_STEP = 8;
+const SCALE_STEP = 0.03;
+
 // ─── Helpers ──────────────────────────────────────────
 
 function AssetIcon({ url }: { url: string | null }) {
@@ -52,7 +56,7 @@ function AssetIcon({ url }: { url: string | null }) {
   return (
     <Image
       source={{ uri: url }}
-      style={{ height: 18, aspectRatio: aspectRatio || 1, borderRadius: 4 }}
+      style={{ height: 18, aspectRatio: aspectRatio || 1 }}
       resizeMode="contain"
       onError={() => setError(true)}
     />
@@ -102,12 +106,27 @@ function StackCard({
     const rawRelative = (cardIndex - topIndexShared.value) % totalCards;
     const relativeIndex = rawRelative < 0 ? rawRelative + totalCards : rawRelative;
     const isTopCard = relativeIndex === 0;
-    const isBackCard = relativeIndex === totalCards - 1;
+
+    // Define the last visible card index (0-indexed)
+    const lastVisibleIndex = Math.min(totalCards, MAX_VISIBLE) - 1;
+    const isBackCard = relativeIndex === lastVisibleIndex;
+
+    // ── Cards beyond the max visible stack: completely invisible ──
+    if (relativeIndex > lastVisibleIndex) {
+      return {
+        transform: [
+          { translateY: lastVisibleIndex * Y_OFFSET_STEP },
+          { scale: 1 - lastVisibleIndex * SCALE_STEP }
+        ],
+        zIndex: 0,
+        opacity: 0,
+      };
+    }
 
     // ── Top card: follows finger + eases in from second position ──
     if (isTopCard) {
-      const entryScale = interpolate(transitionProgress.value, [0, 1], [0.95, 1]);
-      const entryY = interpolate(transitionProgress.value, [0, 1], [15, 0]);
+      const entryScale = interpolate(transitionProgress.value, [0, 1], [1 - SCALE_STEP, 1]);
+      const entryY = interpolate(transitionProgress.value, [0, 1], [Y_OFFSET_STEP, 0]);
 
       // Calculate rotation based on translateX and translateY
       // up to 12 degrees max rotation when swiped horizontally
@@ -141,8 +160,8 @@ function StackCard({
     // This eliminates the "heartbeat" caused by reacting to drag progress.
 
     // Settled position for this relative index
-    const scale = 1 - relativeIndex * 0.05;
-    const yOffset = relativeIndex * 15;
+    const scale = 1 - relativeIndex * SCALE_STEP;
+    const yOffset = relativeIndex * Y_OFFSET_STEP;
 
     // ── Back card: fades in at rest position ──
     if (isBackCard) {
@@ -155,8 +174,8 @@ function StackCard({
 
     // ── Middle cards: ease from old stacked position to new ──
     // Before the shift, this card was one level deeper (relativeIndex + 1).
-    const oldScale = 1 - (relativeIndex + 1) * 0.05;
-    const oldY = (relativeIndex + 1) * 15;
+    const oldScale = 1 - (relativeIndex + 1) * SCALE_STEP;
+    const oldY = (relativeIndex + 1) * Y_OFFSET_STEP;
 
     const finalScale = interpolate(
       transitionProgress.value,

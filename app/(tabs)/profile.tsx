@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, Text, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useAuthStore } from "../../src/store/auth-store";
@@ -7,8 +7,9 @@ import { Colors } from "../../constants/colors";
 import { User, Mail, DollarSign, ShieldCheck } from "lucide-react-native";
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, refreshProfile } = useAuthStore();
   const insets = useSafeAreaInsets();
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -18,6 +19,26 @@ export default function ProfileScreen() {
     }
     await logout();
   };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    try {
+      await refreshProfile();
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (e) {}
+    } catch (err) {
+      console.error("Profile screen refresh failed:", err);
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      } catch (e) {}
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshProfile]);
 
   const formatCurrency = (amountInCents: number, currencyCode?: string | null) => {
     const baseAmount = amountInCents / 100;
@@ -40,6 +61,14 @@ export default function ProfileScreen() {
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.actionPrimary}
+            colors={[Colors.actionPrimary]}
+          />
+        }
       >
         {/* Header */}
         <View className="items-center mb-8 mt-4">

@@ -1,9 +1,6 @@
 import { apiClient } from '../client';
 import { Result, ok, err } from '../../../utils/result';
 import {
-  NetWorthDataPoint,
-  CashFlowDataPoint,
-  CoreNetworkBalance,
   BudgetConfig,
   AnalyticsData
 } from '../../../types';

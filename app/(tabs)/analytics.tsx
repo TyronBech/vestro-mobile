@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Dimensions } from "react-native";
+import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Dimensions, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { LineChart, PieChart } from "react-native-gifted-charts";
@@ -52,12 +52,13 @@ export default function AnalyticsScreen() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [inputSalary, setInputSalary] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const budgetUpdateTrigger = useUIStore((state) => state.budgetUpdateTrigger);
   const toastStore = useToastStore();
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadData = useCallback(async (showLoadingIndicator = true) => {
+    if (showLoadingIndicator) setLoading(true);
     setError(null);
     const result = await fetchAnalyticsData();
     if (result.ok) {
@@ -70,6 +71,26 @@ export default function AnalyticsScreen() {
     }
     setLoading(false);
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    try {
+      await loadData(false);
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (e) {}
+    } catch (err) {
+      console.error("Analytics screen refresh failed:", err);
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      } catch (e) {}
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadData]);
 
   useEffect(() => {
     loadData();
@@ -144,7 +165,7 @@ export default function AnalyticsScreen() {
       <View style={{ flex: 1, backgroundColor: Colors.background, justifyContent: "center", alignItems: "center", padding: 24 }}>
         <Text className="text-sm font-bold text-error mb-4">Error loading analytics data: {error}</Text>
         <TouchableOpacity 
-          onPress={loadData}
+          onPress={() => loadData()}
           className="flex-row items-center bg-backgroundDark rounded-2xl px-6 py-3"
         >
           <RefreshCw size={16} stroke={Colors.background} style={{ marginRight: 8 }} />
@@ -205,6 +226,14 @@ export default function AnalyticsScreen() {
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.actionPrimary}
+            colors={[Colors.actionPrimary]}
+          />
+        }
       >
         {/* Header Title */}
         <View className="items-center mb-6 mt-2">
