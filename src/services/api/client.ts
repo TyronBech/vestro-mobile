@@ -114,6 +114,9 @@ export const apiClient = async <T>(
 
   const defaultHeaders: Record<string, string> = {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
+    "Expires": "0",
   };
 
   try {

@@ -270,16 +270,21 @@ export default function NetworkScreen() {
         contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.actionPrimary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.actionPrimary}
+            colors={[Colors.actionPrimary]}
+          />
         }
       >
         {/* Header */}
-        <View className="flex-row justify-between items-center mb-8 mt-4">
+        <View className="flex-row justify-center items-center mb-8 mt-4">
           <View>
-            <Text className="text-3xl font-black tracking-widest text-textPrimary">
+            <Text className="text-3xl font-black text-center tracking-widest text-textPrimary">
               NETWORK
             </Text>
-            <Text className="text-xs uppercase tracking-widest text-gray-400 mt-1">
+            <Text className="text-xs uppercase tracking-widest text-center text-gray-400 mt-1">
               Routing & Allocations
             </Text>
           </View>

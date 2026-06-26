@@ -12,6 +12,8 @@ import {
 import { X } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
 
+import Toast from "./toast";
+
 interface FlatModalProps {
   visible: boolean;
   onClose: () => void;
@@ -58,6 +60,7 @@ export default function FlatModal({
           </Pressable>
         </KeyboardAvoidingView>
       </Pressable>
+      <Toast />
     </Modal>
   );
 }
