@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import { apiLogin, apiSignup, apiVerifySupabase, apiForgotPassword, apiResetPassword, apiBiometricLogin } from "../services/api/endpoints/auth";
+import { apiLogin, apiSignup, apiVerifySupabase, apiForgotPassword, apiResetPassword, apiBiometricLogin, apiLoginWith2fa } from "../services/api/endpoints/auth";
 import { fetchProfile } from "../services/api/endpoints/profile";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
-import { AuthState } from "../types";
+import { AuthState, UserResponse } from "../types";
 
-let activeGoogleLoginPromise: Promise<void> | null = null;
+let activeGoogleLoginPromise: Promise<{ requires2fa: boolean; user: UserResponse | null }> | null = null;
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -49,6 +49,38 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await apiLogin(params);
+      const { token, user, requires2fa } = response.data;
+
+      if (token) {
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.ACCESS_TOKEN,
+          token,
+          SECURE_STORE_OPTIONS
+        );
+        set({
+          accessToken: token,
+          user,
+          isAuthenticated: true,
+          loading: false,
+        });
+        return { requires2fa: false, user };
+      } else if (requires2fa) {
+        set({ loading: false });
+        return { requires2fa: true, user };
+      } else {
+        set({ loading: false });
+        return { requires2fa: false, user: null };
+      }
+    } catch (err: any) {
+      set({ error: err.message || "Login failed", loading: false });
+      throw err;
+    }
+  },
+
+  loginWith2fa: async (params) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await apiLoginWith2fa(params);
       const { token, user } = response.data;
 
       if (token) {
@@ -67,7 +99,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ loading: false });
       }
     } catch (err: any) {
-      set({ error: err.message || "Login failed", loading: false });
+      set({ error: err.message || "2FA verification failed", loading: false });
       throw err;
     }
   },
@@ -102,14 +134,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   loginWithGoogle: async (supabaseToken) => {
     if (activeGoogleLoginPromise) {
       console.log("[Auth Store] Reusing active Google login promise.");
-      return activeGoogleLoginPromise;
+      return activeGoogleLoginPromise as any;
     }
 
     activeGoogleLoginPromise = (async () => {
       set({ loading: true, error: null });
       try {
         const response = await apiVerifySupabase({ supabaseToken });
-        const { token, user } = response.data;
+        const { token, user, requires2fa } = response.data;
 
         if (token) {
           await SecureStore.setItemAsync(
@@ -123,8 +155,13 @@ export const useAuthStore = create<AuthState>((set) => ({
             isAuthenticated: true,
             loading: false,
           });
+          return { requires2fa: false, user };
+        } else if (requires2fa) {
+          set({ loading: false });
+          return { requires2fa: true, user };
         } else {
           set({ loading: false });
+          return { requires2fa: false, user: null };
         }
       } catch (err: any) {
         set({ error: err.message || "Google login failed", loading: false });
@@ -134,7 +171,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     })();
 
-    return activeGoogleLoginPromise;
+    return activeGoogleLoginPromise as any;
   },
 
   logout: async () => {

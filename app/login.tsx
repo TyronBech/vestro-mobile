@@ -60,12 +60,15 @@ const { width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, loginWithGoogle, loading, error, clearError } = useAuthStore();
+  const { login, loginWithGoogle, loginWith2fa, loading, error, clearError } = useAuthStore();
   const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState<number>(0);
+  const [requires2fa, setRequires2fa] = useState<boolean>(false);
+  const [twoFactorCode, setTwoFactorCode] = useState<string>("");
+  const [tempUserId, setTempUserId] = useState<string>("");
 
   // Reanimated shared value for card shake
   const shakeOffset = useSharedValue(0);
@@ -78,7 +81,6 @@ export default function LoginScreen() {
       setRateLimitTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          clearError();
           return 0;
         }
         return prev - 1;
@@ -86,6 +88,13 @@ export default function LoginScreen() {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, [rateLimitTimeLeft]);
+
+  // Clear authentication error when rate limit ends
+  useEffect(() => {
+    if (rateLimitTimeLeft === 0) {
+      clearError();
+    }
   }, [rateLimitTimeLeft, clearError]);
 
   const formatTime = (seconds: number): string => {
@@ -131,6 +140,23 @@ export default function LoginScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } catch (e) {}
 
+    if (requires2fa) {
+      if (twoFactorCode.length !== 6) {
+        useAuthStore.setState({ error: "2FA code must be 6 digits" });
+        triggerErrorEffects();
+        return;
+      }
+      try {
+        await loginWith2fa({ userId: tempUserId, token: twoFactorCode });
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        } catch (e) {}
+      } catch (err: any) {
+        triggerErrorEffects();
+      }
+      return;
+    }
+
     if (!email.trim() || !password.trim()) {
       useAuthStore.setState({ error: Strings.validationEmailPassword });
       triggerErrorEffects();
@@ -138,13 +164,21 @@ export default function LoginScreen() {
     }
 
     try {
-      await login({ email: email.trim(), password: password.trim() });
-      try {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      } catch (e) {}
+      const result = await login({ email: email.trim(), password: password.trim() });
+      if (result?.requires2fa && result?.user?.id) {
+        setTempUserId(result.user.id);
+        setRequires2fa(true);
+        setTwoFactorCode("");
+      } else {
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        } catch (e) {}
+      }
     } catch (err: any) {
       if (err.status === 429) {
         setRateLimitTimeLeft(900); // 15 minutes lockout
+      } else {
+        triggerErrorEffects();
       }
     }
   };
@@ -194,11 +228,17 @@ export default function LoginScreen() {
           throw new Error("Access token not found in callback hash.");
         }
 
-        await loginWithGoogle(supabaseToken);
+        const googleLoginResult = await loginWithGoogle(supabaseToken);
 
-        try {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-        } catch (e) {}
+        if (googleLoginResult?.requires2fa && googleLoginResult?.user?.id) {
+          setTempUserId(googleLoginResult.user.id);
+          setRequires2fa(true);
+          setTwoFactorCode("");
+        } else {
+          try {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          } catch (e) {}
+        }
       } else if (result.type === "cancel") {
         // Flow cancelled by user
       } else {
@@ -311,7 +351,7 @@ export default function LoginScreen() {
                 }}
               >
                 <Lock size={32} stroke={Colors.actionPrimary} strokeWidth={Sizes.strokeThick} className="mb-4" />
-                <Text className="text-actionPrimary text-xs font-bold uppercase tracking-widest mb-1.5">
+                <Text className="text-actionPrimary text-xs font-bold uppercase tracking-widest mt-3 mb-5">
                   ACCESS LOCKOUT
                 </Text>
                 <Text className="text-background font-black text-4xl tracking-widest mb-3">
@@ -335,108 +375,164 @@ export default function LoginScreen() {
               </View>
             )}
 
-            {/* Inputs */}
-            <View>
-              <View className="mb-4">
-                <Text className="text-background/80 text-[10px] font-bold uppercase tracking-wider mb-1 ml-1">
-                  {Strings.emailLabel}
-                </Text>
-                <TextInput
-                  value={email}
-                  onChangeText={(text) => {
-                    setEmail(text);
-                    if (error) clearError();
-                  }}
-                  placeholder={Strings.emailPlaceholder}
-                  placeholderTextColor="rgba(253, 254, 254, 0.4)"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  className="bg-transparent border-b-2 border-actionPrimary py-2.5 text-background text-base font-semibold"
-                />
-              </View>
-              <View className="mb-5">
-                <Text className="text-background/80 text-[10px] font-bold uppercase tracking-wider mb-1 ml-1">
-                  {Strings.passwordLabel}
-                </Text>
-                <TextInput
-                  value={password}
-                  onChangeText={(text) => {
-                    setPassword(text);
-                    if (error) clearError();
-                  }}
-                  placeholder={Strings.passwordPlaceholder}
-                  placeholderTextColor="rgba(253, 254, 254, 0.4)"
-                  secureTextEntry
-                  autoCapitalize="none"
-                  className="bg-transparent border-b-2 border-actionPrimary py-2.5 text-background text-base font-semibold"
-                />
-              </View>
-            </View>
+            {!requires2fa ? (
+              <>
+                {/* Inputs */}
+                <View>
+                  <View className="mb-4">
+                    <Text className="text-background/80 text-[10px] font-bold uppercase tracking-wider mb-1 ml-1">
+                      {Strings.emailLabel}
+                    </Text>
+                    <TextInput
+                      value={email}
+                      onChangeText={(text) => {
+                        setEmail(text);
+                        if (error) clearError();
+                      }}
+                      placeholder={Strings.emailPlaceholder}
+                      placeholderTextColor="rgba(253, 254, 254, 0.4)"
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      className="bg-transparent border-b-2 border-actionPrimary py-2.5 text-background text-base font-semibold"
+                    />
+                  </View>
+                  <View className="mb-5">
+                    <Text className="text-background/80 text-[10px] font-bold uppercase tracking-wider mb-1 ml-1">
+                      {Strings.passwordLabel}
+                    </Text>
+                    <TextInput
+                      value={password}
+                      onChangeText={(text) => {
+                        setPassword(text);
+                        if (error) clearError();
+                      }}
+                      placeholder={Strings.passwordPlaceholder}
+                      placeholderTextColor="rgba(253, 254, 254, 0.4)"
+                      secureTextEntry
+                      autoCapitalize="none"
+                      className="bg-transparent border-b-2 border-actionPrimary py-2.5 text-background text-base font-semibold"
+                    />
+                  </View>
+                </View>
 
-            {/* Authorize Button */}
-            <TouchableOpacity
-              onPress={handleLogin}
-              disabled={loading}
-              className="bg-actionPrimary rounded-2xl py-4 items-center justify-center mt-2 flex-row"
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={Colors.background} />
-              ) : (
-                <Text className="text-background font-bold text-xs uppercase tracking-widest">
-                  {Strings.loginButtonText}
-                </Text>
-              )}
-            </TouchableOpacity>
+                {/* Authorize Button */}
+                <TouchableOpacity
+                  onPress={handleLogin}
+                  disabled={loading}
+                  className="bg-actionPrimary rounded-2xl py-4 items-center justify-center mt-2 flex-row"
+                >
+                  {loading ? (
+                    <ActivityIndicator size="small" color={Colors.background} />
+                  ) : (
+                    <Text className="text-background font-bold text-xs uppercase tracking-widest">
+                      {Strings.loginButtonText}
+                    </Text>
+                  )}
+                </TouchableOpacity>
 
-            {/* Divider OR */}
-            <View className="flex-row items-center my-4">
-              <View 
-                className="flex-1 h-[1px]" 
-                style={{ backgroundColor: "rgba(253, 254, 254, 0.2)" }} 
-              />
-              <Text 
-                className="mx-4 text-[9px] font-bold uppercase tracking-widest"
-                style={{ color: "rgba(253, 254, 254, 0.5)" }}
-              >
-                OR
-              </Text>
-              <View 
-                className="flex-1 h-[1px]" 
-                style={{ backgroundColor: "rgba(253, 254, 254, 0.2)" }} 
-              />
-            </View>
-
-            {/* Google Login Button */}
-            <TouchableOpacity
-              onPress={handleGoogleLogin}
-              disabled={loading}
-              className="rounded-2xl py-4 items-center justify-center flex-row"
-              style={{ backgroundColor: Colors.background }}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={Colors.textPrimary} />
-              ) : (
-                <>
-                  <GoogleIcon size={16} />
+                {/* Divider OR */}
+                <View className="flex-row items-center my-4">
+                  <View 
+                    className="flex-1 h-[1px]" 
+                    style={{ backgroundColor: "rgba(253, 254, 254, 0.2)" }} 
+                  />
                   <Text 
-                    className="font-bold text-xs uppercase tracking-widest ml-3"
-                    style={{ color: Colors.textPrimary }}
+                    className="mx-4 text-[9px] font-bold uppercase tracking-widest"
+                    style={{ color: "rgba(253, 254, 254, 0.5)" }}
                   >
-                    {Strings.googleLoginButtonText}
+                    OR
                   </Text>
-                </>
-              )}
-            </TouchableOpacity>
+                  <View 
+                    className="flex-1 h-[1px]" 
+                    style={{ backgroundColor: "rgba(253, 254, 254, 0.2)" }} 
+                  />
+                </View>
 
-            {/* Forgot Password Link */}
-            <TouchableOpacity
-              onPress={handleForgotPassword}
-              className="mt-3.5 py-1.5 items-center"
-            >
-              <Text className="text-background/80 text-xs font-bold uppercase tracking-widest">
-                {Strings.forgotPasswordButtonText}
-              </Text>
-            </TouchableOpacity>
+                {/* Google Login Button */}
+                <TouchableOpacity
+                  onPress={handleGoogleLogin}
+                  disabled={loading}
+                  className="rounded-2xl py-4 items-center justify-center flex-row"
+                  style={{ backgroundColor: Colors.background }}
+                >
+                  {loading ? (
+                    <ActivityIndicator size="small" color={Colors.textPrimary} />
+                  ) : (
+                    <>
+                      <GoogleIcon size={16} />
+                      <Text 
+                        className="font-bold text-xs uppercase tracking-widest ml-3"
+                        style={{ color: Colors.textPrimary }}
+                      >
+                        {Strings.googleLoginButtonText}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                {/* Forgot Password Link */}
+                <TouchableOpacity
+                  onPress={handleForgotPassword}
+                  className="mt-3.5 py-1.5 items-center"
+                >
+                  <Text className="text-background/80 text-xs font-bold uppercase tracking-widest">
+                    {Strings.forgotPasswordButtonText}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                {/* 2FA input field */}
+                <View className="mb-6">
+                  <Text className="text-background/80 text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
+                    2FA Authenticator Code
+                  </Text>
+                  <TextInput
+                    value={twoFactorCode}
+                    onChangeText={(text) => {
+                      setTwoFactorCode(text);
+                      if (error) clearError();
+                    }}
+                    placeholder="Enter 6-digit code"
+                    placeholderTextColor="rgba(253, 254, 254, 0.4)"
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    className="bg-transparent border-b-2 border-actionPrimary py-2.5 text-background text-base font-bold tracking-widest text-center"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                {/* Verify Button */}
+                <TouchableOpacity
+                  onPress={handleLogin}
+                  disabled={loading}
+                  className="bg-actionPrimary rounded-2xl py-4 items-center justify-center mt-2 flex-row w-full"
+                >
+                  {loading ? (
+                    <ActivityIndicator size="small" color={Colors.background} />
+                  ) : (
+                    <Text className="text-background font-bold text-xs uppercase tracking-widest">
+                      Verify & Login
+                    </Text>
+                  )}
+                </TouchableOpacity>
+
+                {/* Go Back Button */}
+                <TouchableOpacity
+                  onPress={() => {
+                    setRequires2fa(false);
+                    setTwoFactorCode("");
+                    clearError();
+                  }}
+                  disabled={loading}
+                  className="mt-4 py-2 items-center"
+                >
+                  <Text className="text-background/80 text-xs font-bold uppercase tracking-widest">
+                    Back to Login
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </Card>
         </View>
 
