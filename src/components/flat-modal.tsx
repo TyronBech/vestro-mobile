@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Pressable,
@@ -8,6 +8,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Keyboard,
 } from "react-native";
 import { X } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
@@ -29,6 +30,22 @@ export default function FlatModal({
   headerIcon,
   children,
 }: FlatModalProps) {
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   return (
     <Modal
       visible={visible}
@@ -38,7 +55,7 @@ export default function FlatModal({
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : (keyboardVisible ? "padding" : undefined)}
           style={styles.keyboardView}
           pointerEvents="box-none"
         >

@@ -56,15 +56,20 @@ export interface AuthState {
   loading: boolean;
   error: string | null;
   
+  isSessionLocked: boolean;
+  setSessionLocked: (locked: boolean) => void;
+  biometricUnlock: () => Promise<void>;
   initialize: () => Promise<void>;
-  login: (params: LoginParams) => Promise<void>;
+  login: (params: LoginParams) => Promise<{ requires2fa: boolean; user?: UserResponse | null }>;
+  loginWith2fa: (params: { userId: string; token: string }) => Promise<void>;
   signup: (params: SignupParams) => Promise<void>;
-  loginWithGoogle: (supabaseToken: string) => Promise<void>;
+  loginWithGoogle: (supabaseToken: string) => Promise<{ requires2fa: boolean; user?: UserResponse | null }>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (email: string, otp: string, newPassword: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
   clearError: () => void;
+
 }
 
 export interface NetWorthDataPoint {
