@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import { apiLogin, apiSignup, apiVerifySupabase, apiForgotPassword, apiResetPassword } from "../services/api/endpoints/auth";
+import { apiLogin, apiSignup, apiVerifySupabase, apiForgotPassword, apiResetPassword, apiBiometricLogin } from "../services/api/endpoints/auth";
 import { fetchProfile } from "../services/api/endpoints/profile";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
 import { AuthState } from "../types";
@@ -13,6 +13,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   loading: false,
   error: null,
+  isSessionLocked: false,
+  setSessionLocked: (locked) => set({ isSessionLocked: locked }),
 
   initialize: async () => {
     try {
@@ -144,7 +146,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (err) {
       console.error("Failed to delete token on logout", err);
     }
-    set({ user: null, accessToken: null, isAuthenticated: false });
+    try {
+      await SecureStore.deleteItemAsync(
+        SECURE_STORE_KEYS.BIOMETRIC_KEY,
+        SECURE_STORE_OPTIONS
+      );
+    } catch (err) {
+      console.error("Failed to delete biometric key on logout", err);
+    }
+    set({ user: null, accessToken: null, isAuthenticated: false, isSessionLocked: false });
   },
 
   forgotPassword: async (email: string) => {
@@ -180,4 +190,47 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  biometricUnlock: async () => {
+    set({ loading: true, error: null });
+    try {
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        throw new Error("No user profile loaded");
+      }
+      const biometricKey = await SecureStore.getItemAsync(
+        SECURE_STORE_KEYS.BIOMETRIC_KEY,
+        SECURE_STORE_OPTIONS
+      );
+      if (!biometricKey) {
+        throw new Error("No stored biometric key found on this device");
+      }
+
+      const response = await apiBiometricLogin({
+        userId: user.id,
+        biometricKey,
+      });
+
+      const { token, user: updatedUser } = response.data;
+      if (token) {
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.ACCESS_TOKEN,
+          token,
+          SECURE_STORE_OPTIONS
+        );
+        set({
+          accessToken: token,
+          user: updatedUser,
+          isAuthenticated: true,
+          isSessionLocked: false,
+          loading: false,
+        });
+      } else {
+        set({ loading: false });
+      }
+    } catch (err: any) {
+      set({ error: err.message || "Biometric unlock failed", loading: false });
+      throw err;
+    }
+  },
 }));

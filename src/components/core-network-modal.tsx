@@ -268,7 +268,7 @@ export default function CoreNetworkModal() {
         </View>
       ) : (
         <Animated.View style={animatedStyle}>
-          <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 450 }}>
+          <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
           <View className="space-y-4">
             {/* Macro Asset Selector */}
             <View>

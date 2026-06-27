@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { CheckCircle2, AlertCircle, AlertTriangle, X } from "lucide-react-native";
+import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from "lucide-react-native";
 import { useToastStore } from "../store/toast-store";
 import { Colors } from "../../constants/colors";
 
@@ -20,6 +20,8 @@ export default function Toast() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       } else if (type === "warning") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+      } else if (type === "info") {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       }
     }
   }, [isVisible, type]);
@@ -27,11 +29,11 @@ export default function Toast() {
   if (!isVisible || !message) return null;
 
   // Set colors and icon based on type
-  let borderColor = Colors.border;
+  let borderColor: string = Colors.border;
   let bg = Colors.background;
   let textColor = Colors.textPrimary;
   let IconComponent = CheckCircle2;
-  let iconColor = Colors.success;
+  let iconColor: string = Colors.success;
 
   if (type === "success") {
     borderColor = Colors.success;
@@ -44,6 +46,10 @@ export default function Toast() {
     borderColor = Colors.warning;
     iconColor = Colors.warning;
     IconComponent = AlertTriangle;
+  } else if (type === "info") {
+    borderColor = Colors.textSecondary;
+    iconColor = Colors.textSecondary;
+    IconComponent = Info;
   }
 
   return (

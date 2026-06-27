@@ -149,7 +149,7 @@ export default function MacroAssetModal() {
       title="Add Macro Asset"
       headerIcon={<Landmark size={20} color={Colors.actionPrimary} strokeWidth={2.5} />}
     >
-      <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 450 }}>
+      <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
         <View className="space-y-4">
           {/* Bank Name */}
           <View>

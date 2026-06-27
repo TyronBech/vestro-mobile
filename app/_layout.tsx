@@ -10,12 +10,52 @@ import Toast from "../src/components/toast";
 import BudgetConfigModal from "../src/components/budget-config-modal";
 import MacroAssetModal from "../src/components/macro-asset-modal";
 import CoreNetworkModal from "../src/components/core-network-modal";
+import SessionLockScreen from "../src/components/session-lock-screen";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+function b64Decode(input: string): string {
+  const str = input.replace(/=+$/, '');
+  let output = '';
+  if (str.length % 4 === 1) {
+    throw new Error("'atob' failed: The string to be decoded is not correctly encoded.");
+  }
+  for (let bc = 0, bs = 0, rbuffer, idx = 0; idx < str.length; idx++) {
+    const char = str.charAt(idx);
+    const pos = chars.indexOf(char);
+    if (pos === -1) continue;
+    bs = bc % 4 ? bs * 64 + pos : pos;
+    if (bc++ % 4) {
+      rbuffer = (bs >> ((-2 * bc) & 6));
+      output += String.fromCharCode(255 & rbuffer);
+    }
+  }
+  return output;
+}
+
+function getJwtExpiry(token: string | null): number | null {
+  if (!token) return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const decoded = b64Decode(base64);
+    const payload = JSON.parse(decoded);
+    return payload.exp ? payload.exp * 1000 : null;
+  } catch (e) {
+    console.error("JWT Decode error:", e);
+    return null;
+  }
+}
+
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, accessToken, isSessionLocked, setSessionLocked } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -74,6 +114,25 @@ export default function RootLayout() {
   }, [router]);
 
   useEffect(() => {
+    if (!isAuthenticated || !accessToken || isSessionLocked) return;
+
+    const checkExpiry = () => {
+      const exp = getJwtExpiry(accessToken);
+      if (exp) {
+        const now = Date.now();
+        if (now >= exp) {
+          console.log("[Session Watchdog] JWT expired. Locking session.");
+          setSessionLocked(true);
+        }
+      }
+    };
+
+    checkExpiry();
+    const interval = setInterval(checkExpiry, 5000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, accessToken, isSessionLocked, setSessionLocked]);
+
+  useEffect(() => {
     if (!isReady) return;
 
     const inTabsGroup = segments[0] === "(tabs)";
@@ -114,6 +173,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
         </Stack>
+        {isAuthenticated && isSessionLocked && <SessionLockScreen />}
         <Toast />
         <BudgetConfigModal />
         <MacroAssetModal />
