@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View, Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import * as Linking from "expo-linking";
 import { useAuthStore } from "../src/store/auth-store";
 import { Colors } from "../constants/colors";
@@ -10,6 +11,8 @@ import Toast from "../src/components/toast";
 import BudgetConfigModal from "../src/components/budget-config-modal";
 import MacroAssetModal from "../src/components/macro-asset-modal";
 import CoreNetworkModal from "../src/components/core-network-modal";
+import SweepModal from "../src/components/sweep-modal";
+import CashFlowModal from "../src/components/cash-flow-modal";
 import SessionLockScreen from "../src/components/session-lock-screen";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -165,6 +168,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
+        <StatusBar style="dark" />
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
@@ -178,6 +182,8 @@ export default function RootLayout() {
         <BudgetConfigModal />
         <MacroAssetModal />
         <CoreNetworkModal />
+        <SweepModal />
+        <CashFlowModal />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

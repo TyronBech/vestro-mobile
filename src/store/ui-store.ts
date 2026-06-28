@@ -14,6 +14,14 @@ interface UIState {
   editingCoreNetwork: CoreNetwork | null;
   openCoreNetworkModal: (node?: CoreNetwork | null) => void;
   closeCoreNetworkModal: () => void;
+
+  isSweepModalOpen: boolean;
+  openSweepModal: () => void;
+  closeSweepModal: () => void;
+
+  isCashFlowModalOpen: boolean;
+  openCashFlowModal: () => void;
+  closeCashFlowModal: () => void;
   
   // Counter to trigger data refreshes across screens when budget config updates
   budgetUpdateTrigger: number;
@@ -37,6 +45,14 @@ export const useUIStore = create<UIState>((set) => ({
   editingCoreNetwork: null,
   openCoreNetworkModal: (node = null) => set({ isCoreNetworkModalOpen: true, editingCoreNetwork: node }),
   closeCoreNetworkModal: () => set({ isCoreNetworkModalOpen: false, editingCoreNetwork: null }),
+
+  isSweepModalOpen: false,
+  openSweepModal: () => set({ isSweepModalOpen: true }),
+  closeSweepModal: () => set({ isSweepModalOpen: false }),
+
+  isCashFlowModalOpen: false,
+  openCashFlowModal: () => set({ isCashFlowModalOpen: true }),
+  closeCashFlowModal: () => set({ isCashFlowModalOpen: false }),
   
   budgetUpdateTrigger: 0,
   triggerBudgetUpdate: () => set((state) => ({ budgetUpdateTrigger: state.budgetUpdateTrigger + 1 })),

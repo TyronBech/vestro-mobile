@@ -17,6 +17,7 @@ import { fetchCoreNetworks, CoreNetwork, deleteCoreNetwork } from "../../src/ser
 import { fetchMacroAssets, MacroAsset } from "../../src/services/api/endpoints/macro-assets";
 import { Colors } from "../../constants/colors";
 import { useToastStore } from "../../src/store/toast-store";
+import { useAuthStore } from "../../src/store/auth-store";
 
 // Helper component to dynamically determine and apply the aspect ratio of the bank banner image
 function NodeAssetIcon({ url, colorCode }: { url: string | null; colorCode: string | null }) {
@@ -58,6 +59,7 @@ export default function NetworkScreen() {
   const insets = useSafeAreaInsets();
   const { openCoreNetworkModal, networkUpdateTrigger } = useUIStore();
   const toastStore = useToastStore();
+  const { isSessionLocked } = useAuthStore();
 
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -94,8 +96,10 @@ export default function NetworkScreen() {
   };
 
   useEffect(() => {
-    loadData();
-  }, [networkUpdateTrigger]);
+    if (!isSessionLocked) {
+      loadData();
+    }
+  }, [networkUpdateTrigger, isSessionLocked]);
 
   const onRefresh = async () => {
     setRefreshing(true);

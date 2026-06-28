@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Dimensions, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { LineChart, PieChart } from "react-native-gifted-charts";
+import { LineChart, PieChart, BarChart } from "react-native-gifted-charts";
 import {
   Shield,
   Home,
@@ -26,6 +26,7 @@ import { useUIStore } from "../../src/store/ui-store";
 import { useToastStore } from "../../src/store/toast-store";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+import { useAuthStore } from "../../src/store/auth-store";
 const containerPadding = 24;
 const cardPadding = 20;
 const chartWidth = SCREEN_WIDTH - containerPadding * 2 - cardPadding * 2;
@@ -56,6 +57,7 @@ export default function AnalyticsScreen() {
 
   const budgetUpdateTrigger = useUIStore((state) => state.budgetUpdateTrigger);
   const toastStore = useToastStore();
+  const { isSessionLocked } = useAuthStore();
 
   const loadData = useCallback(async (showLoadingIndicator = true) => {
     if (showLoadingIndicator) setLoading(true);
@@ -93,8 +95,10 @@ export default function AnalyticsScreen() {
   }, [loadData]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData, budgetUpdateTrigger]);
+    if (!isSessionLocked) {
+      loadData();
+    }
+  }, [loadData, budgetUpdateTrigger, isSessionLocked]);
 
   const handleSaveSalary = async () => {
     const salaryPesos = parseFloat(inputSalary);
@@ -203,6 +207,12 @@ export default function AnalyticsScreen() {
   const outflowDataPoints = data.cashFlowTrend.map((p) => ({
     value: Math.round(p.outflow / 100),
   }));
+
+  // Format Monthly Sweep data for BarChart (Vestro Red/Accent Theme)
+  const sweepDataPoints = data.sweepTrend?.map((p) => ({
+    value: Math.round(p.amount / 100),
+    label: p.month.toUpperCase(),
+  })) ?? [];
 
   // Format Core Network Balances for PieChart
   const networkBalances = data.coreNetworkBalances.filter((n) => n.balance > 0);
@@ -326,6 +336,7 @@ export default function AnalyticsScreen() {
               initialSpacing={10}
               endSpacing={10}
               curved
+              curvature={0.06}
               areaChart
               color="#0091FF"
               thickness={2.5}
@@ -403,6 +414,7 @@ export default function AnalyticsScreen() {
               initialSpacing={10}
               endSpacing={10}
               curved
+              curvature={0.06}
               areaChart
               color1={Colors.success}
               color2={Colors.actionPrimary}
@@ -441,6 +453,78 @@ export default function AnalyticsScreen() {
               <View className="w-2.5 h-2.5 bg-actionPrimary rounded-full mr-2" />
               <Text className="text-[10px] font-black uppercase tracking-wider text-textSecondary">Outflow</Text>
             </View>
+          </View>
+        </View>
+
+        {/* 3.5. Monthly Sweep Bar Graph (Accent / Vestro Red Theme) */}
+        <View className="border border-borderLight rounded-2xl p-5 bg-background mb-6">
+          <View className="items-center mb-4">
+            <Text className="text-sm font-black text-textPrimary">
+              Monthly Sweep
+            </Text>
+            <Text className="text-[10px] font-bold text-gray-400 mt-0.5">
+              {dateRangeStr}
+            </Text>
+          </View>
+
+          <View className="items-center" style={{ marginLeft: -15 }}>
+            {sweepDataPoints.length === 0 || sweepDataPoints.every(p => p.value === 0) ? (
+              <View style={{ height: 140, justifyContent: 'center', alignItems: 'center' }}>
+                <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  No Sweeps Recorded
+                </Text>
+              </View>
+            ) : (
+              <BarChart
+                data={sweepDataPoints}
+                height={140}
+                width={chartWidth}
+                barWidth={24}
+                spacing={20}
+                noOfSections={3}
+                barBorderRadius={4}
+                frontColor={Colors.actionPrimary}
+                yAxisColor="transparent"
+                xAxisColor="transparent"
+                yAxisLabelWidth={38}
+                yAxisTextStyle={{ color: Colors.textSecondary, fontSize: 8, fontWeight: "bold" }}
+                xAxisLabelTextStyle={{ color: Colors.textSecondary, fontSize: 8, fontWeight: "black" }}
+                formatYLabel={formatShortCurrency}
+                // Interactive pointer config
+                pointerConfig={{
+                  pointerStripColor: Colors.actionPrimary,
+                  pointerStripWidth: 1.5,
+                  strokeDashArray: [2, 5],
+                  pointerColor: Colors.actionPrimary,
+                  radius: 5,
+                  pointerLabelWidth: 85,
+                  pointerLabelHeight: 35,
+                  pointerLabelComponent: (items: any) => {
+                    if (!items || items.length === 0) return null;
+                    return (
+                      <View
+                        style={{
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          backgroundColor: "#ffffff",
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: "#e0e0e0",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginTop: -25,
+                          marginLeft: -10,
+                        }}
+                      >
+                        <Text style={{ fontSize: 9, fontWeight: "900", color: Colors.textPrimary }}>
+                          {formatCurrency(items[0].value * 100)}
+                        </Text>
+                      </View>
+                    );
+                  },
+                }}
+              />
+            )}
           </View>
         </View>
 

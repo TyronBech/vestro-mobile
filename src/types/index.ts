@@ -107,6 +107,12 @@ export interface AnalyticsData {
   cashFlowTrend: CashFlowDataPoint[];
   coreNetworkBalances: CoreNetworkBalance[];
   budgetConfig: BudgetConfig | null;
+  sweepTrend: SweepDataPoint[];
+}
+
+export interface SweepDataPoint {
+  month: string;
+  amount: number; // in cents
 }
 
 export interface MacroAsset {

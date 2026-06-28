@@ -138,6 +138,7 @@ export default function CoreNetworkModal() {
   };
 
   const handleSave = async () => {
+    if (saving) return;
     if (!selectedMacroAssetId) {
       triggerErrorEffects();
       toastStore.show("Macro Asset selection is required.", "error");
