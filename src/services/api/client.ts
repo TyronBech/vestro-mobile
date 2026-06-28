@@ -1,6 +1,17 @@
 import { API_BASE_URL, API_RETRIES, API_TIMEOUT_MS, SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "./config";
 import * as SecureStore from "expo-secure-store";
 
+let onTokenRefreshed: ((token: string) => void) | null = null;
+let onUnauthorized: (() => void) | null = null;
+
+export const setTokenRefreshedCallback = (cb: (token: string) => void) => {
+  onTokenRefreshed = cb;
+};
+
+export const setUnauthorizedCallback = (cb: () => void) => {
+  onUnauthorized = cb;
+};
+
 interface FetchOptions extends RequestInit {
   headers?: Record<string, string>;
   timeoutMs?: number;
@@ -156,9 +167,27 @@ export const apiClient = async <T>(
         signal: controller.signal,
       });
 
+      // Extract and handle refreshed token
+      const refreshedToken = response.headers.get("x-refreshed-token");
+      if (refreshedToken) {
+        try {
+          await SecureStore.setItemAsync(
+            SECURE_STORE_KEYS.ACCESS_TOKEN,
+            refreshedToken,
+            SECURE_STORE_OPTIONS
+          );
+          onTokenRefreshed?.(refreshedToken);
+        } catch (e) {
+          console.error("Failed to save refreshed token", e);
+        }
+      }
+
       const data = await parseResponse(response);
 
       if (!response.ok) {
+        if (response.status === 401) {
+          onUnauthorized?.();
+        }
         throw new ApiClientError(
           getErrorMessage(data, "An error occurred during the request."),
           "http",

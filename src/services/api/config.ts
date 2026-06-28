@@ -7,6 +7,7 @@ const APP_SLUG = Constants.expoConfig?.slug || "vestro";
 export const SECURE_STORE_KEYS = {
   ACCESS_TOKEN: `${APP_SLUG}_access_token`,
   BIOMETRIC_KEY: `${APP_SLUG}_biometric_key`,
+  USER_PROFILE: `${APP_SLUG}_user_profile`,
 } as const;
 
 

@@ -40,6 +40,19 @@ export default function ProfileScreen() {
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
+  const [hasLocalBiometricKey, setHasLocalBiometricKey] = useState(false);
+
+  useEffect(() => {
+    const checkLocalKey = async () => {
+      const storedKey = await SecureStore.getItemAsync(
+        SECURE_STORE_KEYS.BIOMETRIC_KEY,
+        SECURE_STORE_OPTIONS
+      );
+      setHasLocalBiometricKey(!!storedKey);
+    };
+    checkLocalKey();
+  }, [user]);
+
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
       setKeyboardVisible(true);
@@ -164,6 +177,7 @@ export default function ProfileScreen() {
         await apiDisableBiometrics();
         await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.BIOMETRIC_KEY, SECURE_STORE_OPTIONS);
         await refreshProfile();
+        setHasLocalBiometricKey(false);
         toast.show("Biometrics disabled", "success");
       } catch (err: any) {
         toast.show(err.message || "Failed to disable biometrics", "error");
@@ -198,6 +212,7 @@ export default function ProfileScreen() {
           );
 
           await refreshProfile();
+          setHasLocalBiometricKey(true);
           toast.show("Biometrics linked successfully!", "success");
         } catch (err: any) {
           toast.show(err.message || "Failed to enable biometrics", "error");
@@ -488,10 +503,10 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <Switch
-              value={user.biometricsEnabled}
+              value={!!user?.biometricsEnabled && hasLocalBiometricKey}
               onValueChange={handleBiometricToggle}
               trackColor={{ false: Colors.border, true: Colors.backgroundDark }}
-              thumbColor={user.biometricsEnabled ? Colors.actionPrimary : "#fdfefe"}
+              thumbColor={(user?.biometricsEnabled && hasLocalBiometricKey) ? Colors.actionPrimary : "#fdfefe"}
             />
           </View>
 

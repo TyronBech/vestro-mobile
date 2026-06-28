@@ -158,6 +158,11 @@ export default function SessionLockScreen() {
             token,
             SECURE_STORE_OPTIONS
           );
+          await SecureStore.setItemAsync(
+            SECURE_STORE_KEYS.USER_PROFILE,
+            JSON.stringify(updatedUser),
+            SECURE_STORE_OPTIONS
+          );
           useAuthStore.setState({
             accessToken: token,
             user: updatedUser,
@@ -191,6 +196,11 @@ export default function SessionLockScreen() {
           await SecureStore.setItemAsync(
             SECURE_STORE_KEYS.ACCESS_TOKEN,
             token,
+            SECURE_STORE_OPTIONS
+          );
+          await SecureStore.setItemAsync(
+            SECURE_STORE_KEYS.USER_PROFILE,
+            JSON.stringify(updatedUser),
             SECURE_STORE_OPTIONS
           );
           useAuthStore.setState({
@@ -283,6 +293,14 @@ export default function SessionLockScreen() {
                     )}
                   </TouchableOpacity>
                 </View>
+                {user?.biometricsEnabled && !hasBiometricKey && (
+                  <View className="flex-row items-start mt-3 border border-gray-100 rounded-2xl p-3 bg-gray-50 w-full">
+                    <ShieldAlert size={14} color={Colors.textSecondary} strokeWidth={2.5} className="mr-2 mt-0.5" />
+                    <Text className="text-textSecondary text-[10px] font-semibold flex-1 leading-normal">
+                      Biometrics is enabled on your account, but this device is not linked. Unlock with your password to link this device.
+                    </Text>
+                  </View>
+                )}
               </View>
             ) : (
               <View key="2fa-field" className="w-full">
