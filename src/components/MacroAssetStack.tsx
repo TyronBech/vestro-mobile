@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, Dimensions, Image } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
@@ -6,8 +7,11 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  withDelay,
   runOnJS,
   interpolate,
+  Easing,
+  SharedValue,
   Easing,
   SharedValue,
 } from 'react-native-reanimated';
@@ -43,7 +47,9 @@ function AssetIcon({ url }: { url: string | null }) {
         url,
         (width, height) => {
           if (height > 0) setAspectRatio(width / height);
+          if (height > 0) setAspectRatio(width / height);
         },
+        () => setError(true),
         () => setError(true),
       );
     }
@@ -194,7 +200,37 @@ function StackCard({
       opacity: 1,
     };
   });
+    return {
+      transform: [{ translateY: finalY }, { scale: finalScale }],
+      zIndex: totalCards - relativeIndex,
+      opacity: 1,
+    };
+  });
 
+  // ── Card visual content ──
+  const cardView = (
+    <Animated.View
+      style={[{ position: 'absolute', width: '100%', height: 200 }, animatedStyle]}
+    >
+      <View className="w-full h-full border border-borderLight rounded-2xl overflow-hidden shadow-sm bg-background">
+        {/* Radial gradient background */}
+        <Svg height="100%" width="100%" style={{ position: 'absolute' }}>
+          <Defs>
+            <RadialGradient
+              id={`cardGrad-${asset.id}`}
+              cx="100%"
+              cy="100%"
+              r="85%"
+              fx="100%"
+              fy="100%"
+            >
+              <Stop offset="0%" stopColor={asset.colorCode || '#575757'} stopOpacity="1" />
+              <Stop offset="30%" stopColor={asset.colorCode || '#575757'} stopOpacity="0.85" />
+              <Stop offset="100%" stopColor="#1B1212" stopOpacity="1" />
+            </RadialGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100%" height="100%" fill={`url(#cardGrad-${asset.id})`} />
+        </Svg>
   // ── Card visual content ──
   const cardView = (
     <Animated.View
@@ -227,7 +263,18 @@ function StackCard({
               <AssetIcon url={asset.iconUrl} />
             </View>
           </View>
+        <View className="p-6 flex-1 justify-between">
+          {/* Top Row: Asset Icon */}
+          <View className="flex-row justify-between items-center">
+            <View className="flex-row items-center">
+              <AssetIcon url={asset.iconUrl} />
+            </View>
+          </View>
 
+          {/* Balance */}
+          <Text className="text-background text-4xl font-black tracking-widest">
+            {showBalance ? formatCurrency(asset.balance) : '••••••••'}
+          </Text>
           {/* Balance */}
           <Text className="text-background text-4xl font-black tracking-widest">
             {showBalance ? formatCurrency(asset.balance) : '••••••••'}
@@ -249,7 +296,208 @@ function StackCard({
       </View>
     </Animated.View>
   );
+          {/* Bottom Row: Purpose & Mastercard Logo */}
+          <View className="flex-row justify-between items-end">
+            <View>
+              <Text className="text-gray-400 text-[10px] uppercase tracking-widest mb-1">
+                Purpose
+              </Text>
+              <Text className="text-background text-sm font-bold uppercase tracking-widest">
+                {asset.purpose}
+              </Text>
+            </View>
+            <MastercardIcon width={45} height={28} />
+          </View>
+        </View>
+      </View>
+    </Animated.View>
+  );
 
+  return cardView;
+}
+
+// ─── Stack Container ──────────────────────────────────
+
+interface Props {
+  assets: MacroAsset[];
+  showBalance: boolean;
+}
+
+export function MacroAssetStack({ assets, showBalance }: Props) {
+  // React state — used only for GestureDetector binding (non-critical timing)
+  const [topIndex, setTopIndex] = useState(0);
+
+  // ── Shared values (UI thread, zero sync gap) ──
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const transitionProgress = useSharedValue(1);
+  const backCardOpacity = useSharedValue(1);
+  // Lock direction to single axis: 0 = none, 1 = X-axis, 2 = Y-axis
+  const dragDirection = useSharedValue(0);
+
+  // Source of truth for card positions — lives on the UI thread
+  const topIndexShared = useSharedValue(0);
+
+  /** Sync React state with the UI-thread shared value (for GestureDetector). */
+  const syncReactState = useCallback(() => {
+    setTopIndex((prev) => (prev + 1) % assets.length);
+  }, [assets.length]);
+
+  const panGesture = useMemo(() => {
+    const cardCount = assets.length;
+
+    return Gesture.Pan()
+      .onStart(() => {
+        dragDirection.value = 0;
+      })
+      .onUpdate((event) => {
+        // Block gesture if a transition animation is still active
+        if (transitionProgress.value < 1) return;
+
+        // Determine axis direction if not set yet (using threshold of 5 pixels)
+        if (dragDirection.value === 0) {
+          const dx = Math.abs(event.translationX);
+          const dy = Math.abs(event.translationY);
+
+          if (dx > 5 || dy > 5) {
+            dragDirection.value = dx > dy ? 1 : 2;
+          }
+        }
+
+        // Restrict movement based on locked axis
+        if (dragDirection.value === 1) {
+          translateX.value = event.translationX;
+          translateY.value = 0;
+        } else if (dragDirection.value === 2) {
+          translateX.value = 0;
+          translateY.value = event.translationY;
+        } else {
+          translateX.value = event.translationX;
+          translateY.value = event.translationY;
+        }
+      })
+      .onEnd((event) => {
+        // Block gesture if a transition animation is still active
+        if (transitionProgress.value < 1) return;
+
+        const currentX = translateX.value;
+        const currentY = translateY.value;
+
+        const isSwipedLeft = currentX < -SWIPE_THRESHOLD;
+        const isSwipedRight = currentX > SWIPE_THRESHOLD;
+        const isSwipedUp = currentY < -SWIPE_THRESHOLD;
+        const isSwipedDown = currentY > SWIPE_THRESHOLD;
+
+        // Reset locked axis
+        dragDirection.value = 0;
+
+        if (isSwipedLeft || isSwipedRight || isSwipedUp || isSwipedDown) {
+          runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
+
+          // Continue in the swipe direction until off-screen
+          const outX = isSwipedLeft
+            ? -SCREEN_WIDTH * 1.5
+            : isSwipedRight
+              ? SCREEN_WIDTH * 1.5
+              : currentX;
+          const outY = isSwipedUp
+            ? -SCREEN_WIDTH * 1.5
+            : isSwipedDown
+              ? SCREEN_WIDTH * 1.5
+              : currentY;
+
+          // Determine which axis is the primary swipe axis to attach callback
+          const mainAxisIsX = isSwipedLeft || isSwipedRight;
+
+          const onAnimationComplete = (finished?: boolean) => {
+            if (!finished) return;
+            'worklet';
+
+            // All below runs on the UI thread in a single frame — no flash.
+
+            // Advance top index
+            topIndexShared.value = (topIndexShared.value + 1) % cardCount;
+
+            // Reset drag position
+            translateX.value = 0;
+            translateY.value = 0;
+
+            // ── Phase 2: second card eases up to become first ──
+            transitionProgress.value = 0;
+            transitionProgress.value = withTiming(1, {
+              duration: TRANSITION_MS,
+              easing: SMOOTH_EASING,
+            }, () => {
+              // Sync React state only AFTER the transition animation is
+              // fully complete — prevents a mid-animation re-render that
+              // would cause a visible scale snap / heartbeat.
+              runOnJS(syncReactState)();
+            });
+
+            // ── Phase 3: swiped card fades in at the back (delayed) ──
+            backCardOpacity.value = 0;
+            backCardOpacity.value = withDelay(
+              FADE_DELAY_MS,
+              withTiming(1, {
+                duration: FADE_MS,
+                easing: SMOOTH_EASING,
+              }),
+            );
+          };
+
+          if (mainAxisIsX) {
+            translateX.value = withTiming(outX, {
+              duration: TRANSITION_MS,
+              easing: SMOOTH_EASING,
+            }, onAnimationComplete);
+            translateY.value = withTiming(outY, {
+              duration: TRANSITION_MS,
+              easing: SMOOTH_EASING,
+            });
+          } else {
+            translateY.value = withTiming(outY, {
+              duration: TRANSITION_MS,
+              easing: SMOOTH_EASING,
+            }, onAnimationComplete);
+            translateX.value = withTiming(outX, {
+              duration: TRANSITION_MS,
+              easing: SMOOTH_EASING,
+            });
+          }
+        } else {
+          // Below threshold — glide back to center
+          translateX.value = withTiming(0, { duration: 200, easing: SMOOTH_EASING });
+          translateY.value = withTiming(0, { duration: 200, easing: SMOOTH_EASING });
+        }
+      });
+  }, [assets.length, syncReactState]);
+
+  if (!assets || assets.length === 0) {
+    return null;
+  }
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <View
+        className="relative w-full h-[220px] mb-6 items-center justify-center"
+        style={{ zIndex: 10 }}
+      >
+        {assets.map((asset, index) => (
+          <StackCard
+            key={asset.id}
+            asset={asset}
+            cardIndex={index}
+            totalCards={assets.length}
+            translateX={translateX}
+            translateY={translateY}
+            transitionProgress={transitionProgress}
+            backCardOpacity={backCardOpacity}
+            topIndexShared={topIndexShared}
+            showBalance={showBalance}
+          />
+        ))}
+      </View>
+    </GestureDetector>
   return cardView;
 }
 

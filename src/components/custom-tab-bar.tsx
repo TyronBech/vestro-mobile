@@ -26,8 +26,10 @@ import {
   ArrowUpRight,
   TrendingUp,
   Sliders,
+  Sliders,
 } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
+import { useUIStore } from "../store/ui-store";
 import { useUIStore } from "../store/ui-store";
 
 const UserIcon = ({ color, filled }: { color: string; filled: boolean }) => {
@@ -182,15 +184,18 @@ export default function CustomTabBar({
         pointerEvents="box-none"
       >
         {/* Left: Modify Budget Configuration */}
+        {/* Left: Modify Budget Configuration */}
         <Animated.View
           style={[styles.bubbleWrapper, leftBubbleStyle]}
           pointerEvents={isOpen ? "auto" : "none"}
         >
           <TouchableOpacity
             onPress={handleBudgetConfigPress}
+            onPress={handleBudgetConfigPress}
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
             style={{ backgroundColor: Colors.backgroundDark }}
           >
+            <Sliders size={20} stroke={Colors.background} strokeWidth={2.5} />
             <Sliders size={20} stroke={Colors.background} strokeWidth={2.5} />
           </TouchableOpacity>
           <Text

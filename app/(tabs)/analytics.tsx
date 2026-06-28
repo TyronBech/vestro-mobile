@@ -19,7 +19,49 @@ import {
   LucideIcon
 } from "lucide-react-native";
 
+import * as Haptics from "expo-haptics";
+import { LineChart, PieChart } from "react-native-gifted-charts";
+import {
+  Shield,
+  Home,
+  Sparkles,
+  TrendingUp,
+  HeartHandshake,
+  CreditCard,
+  Target,
+  Landmark,
+  Zap,
+  Coins,
+  Save,
+  RefreshCw,
+  LucideIcon
+} from "lucide-react-native";
+
 import { Colors } from "../../constants/colors";
+import { fetchAnalyticsData, updateBudgetSalary } from "../../src/services/api/endpoints/analytics";
+import { AnalyticsData } from "../../src/types";
+import { useUIStore } from "../../src/store/ui-store";
+import { useToastStore } from "../../src/store/toast-store";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const containerPadding = 24;
+const cardPadding = 20;
+const chartWidth = SCREEN_WIDTH - containerPadding * 2 - cardPadding * 2;
+
+// Icon mapping based on CoreNetworkType
+const iconMap: Record<string, LucideIcon> = {
+  EMERGENCY_FUND: Shield,
+  RENT: Home,
+  WANTS_SANDBOX: Sparkles,
+  INVESTMENTS: TrendingUp,
+  INSURANCE: HeartHandshake,
+  CREDIT_BUFFER: CreditCard,
+  PERSONAL_GOAL: Target,
+  SAVINGS_VAULT: Landmark,
+  CREDIT_CARD: CreditCard,
+  UTILITIES: Zap,
+  PAYCHECK: Coins,
+};
 import { fetchAnalyticsData, updateBudgetSalary } from "../../src/services/api/endpoints/analytics";
 import { AnalyticsData } from "../../src/types";
 import { useUIStore } from "../../src/store/ui-store";
@@ -140,6 +182,7 @@ export default function AnalyticsScreen() {
       style: "currency",
       currency: "PHP",
       maximumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(cents / 100);
   };
 
@@ -237,14 +280,57 @@ export default function AnalyticsScreen() {
       >
         {/* Header Title */}
         <View className="items-center mb-6 mt-2">
+        <View className="items-center mb-6 mt-2">
           <Text className="text-3xl font-black tracking-widest text-textPrimary">
             ANALYTICS
           </Text>
           <Text className="text-xs uppercase tracking-widest text-gray-400 mt-1">
             Budget & Performance
+            Budget & Performance
           </Text>
         </View>
 
+        {/* 1. Interactive Budget Config Calculator */}
+        <View className="border border-borderLight rounded-2xl p-5 bg-background mb-6">
+          <Text className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3">
+            Budget Simulator & Config
+          </Text>
+
+          <View className="flex-row items-center border border-border rounded-xl px-4 py-2 bg-backgroundLight mb-4">
+            <Text className="text-sm font-bold text-textPrimary mr-2">₱</Text>
+            <TextInput
+              value={inputSalary}
+              onChangeText={setInputSalary}
+              placeholder="Enter base monthly salary"
+              keyboardType="numeric"
+              placeholderTextColor={Colors.textMuted}
+              className="flex-1 text-sm font-bold text-textPrimary p-0"
+            />
+            {savingSalary ? (
+              <ActivityIndicator size="small" color={Colors.actionPrimary} />
+            ) : (
+              <TouchableOpacity onPress={handleSaveSalary} style={{ padding: 4 }}>
+                <Save size={18} stroke={Colors.actionPrimary} strokeWidth={2.5} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Computed Breakdown Table */}
+          <View className="space-y-3">
+            <View className="flex-row justify-between items-center py-1.5 border-b border-borderLight">
+              <View className="flex-row items-center">
+                <View className="w-2.5 h-2.5 rounded-full bg-textPrimary mr-2" />
+                <Text className="text-xs font-bold text-textSecondary">Needs ({Math.round(needsRate * 100)}%)</Text>
+              </View>
+              <Text className="text-xs font-black text-textPrimary">{formatCurrency(calculatedNeeds)}</Text>
+            </View>
+
+            <View className="flex-row justify-between items-center py-1.5 border-b border-borderLight">
+              <View className="flex-row items-center">
+                <View className="w-2.5 h-2.5 rounded-full bg-actionPrimary mr-2" />
+                <Text className="text-xs font-bold text-textSecondary">Wants ({Math.round(wantsRate * 100)}%)</Text>
+              </View>
+              <Text className="text-xs font-black text-textPrimary">{formatCurrency(calculatedWants)}</Text>
         {/* 1. Interactive Budget Config Calculator */}
         <View className="border border-borderLight rounded-2xl p-5 bg-background mb-6">
           <Text className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3">
@@ -296,6 +382,20 @@ export default function AnalyticsScreen() {
               <Text className="text-xs font-black text-textPrimary">{formatCurrency(calculatedSavings)}</Text>
             </View>
 
+            <View className="flex-row justify-between items-center py-1.5 border-b border-borderLight">
+              <View className="flex-row items-center">
+                <View className="w-2.5 h-2.5 rounded-full bg-success mr-2" />
+                <Text className="text-xs font-bold text-textSecondary">Savings ({Math.round(savingsRate * 100)}%)</Text>
+              </View>
+              <Text className="text-xs font-black text-textPrimary">{formatCurrency(calculatedSavings)}</Text>
+            </View>
+
+            <View className="flex-row justify-between items-center py-1.5">
+              <View className="flex-row items-center">
+                <View className="w-2.5 h-2.5 rounded-full bg-purple-500 mr-2" />
+                <Text className="text-xs font-bold text-textSecondary">Investments ({Math.round(investmentsRate * 100)}%)</Text>
+              </View>
+              <Text className="text-xs font-black text-textPrimary">{formatCurrency(calculatedInvestments)}</Text>
             <View className="flex-row justify-between items-center py-1.5">
               <View className="flex-row items-center">
                 <View className="w-2.5 h-2.5 rounded-full bg-purple-500 mr-2" />
@@ -314,9 +414,78 @@ export default function AnalyticsScreen() {
             </Text>
             <Text className="text-[10px] font-bold text-gray-400 mt-0.5">
               {dateRangeStr}
+        {/* 2. Net Worth Growth Line Graph (Blue Premium Theme) */}
+        <View className="border border-borderLight rounded-2xl p-5 bg-background mb-6">
+          <View className="items-center mb-4">
+            <Text className="text-sm font-black text-textPrimary">
+              Net Worth Growth
+            </Text>
+            <Text className="text-[10px] font-bold text-gray-400 mt-0.5">
+              {dateRangeStr}
             </Text>
           </View>
 
+          <View className="items-center" style={{ marginLeft: -15 }}>
+            <LineChart
+              data={netWorthDataPoints}
+              height={140}
+              width={chartWidth}
+              spacing={lineSpacing}
+              initialSpacing={10}
+              endSpacing={10}
+              curved
+              areaChart
+              color="#0091FF"
+              thickness={2.5}
+              startFillColor="#0091FF"
+              endFillColor="#0091FF"
+              startOpacity={0.25}
+              endOpacity={0.01}
+              rulesType="dashed"
+              rulesColor={Colors.borderLight}
+              noOfSections={3}
+              yAxisColor="transparent"
+              xAxisColor="transparent"
+              yAxisLabelWidth={38}
+              yAxisTextStyle={{ color: Colors.textSecondary, fontSize: 8, fontWeight: "bold" }}
+              xAxisLabelTextStyle={{ color: Colors.textSecondary, fontSize: 8, fontWeight: "black" }}
+              dataPointsColor="#0091FF"
+              dataPointsRadius={4}
+              formatYLabel={formatShortCurrency}
+              // Interactive Pointer/Tooltip Configuration
+              pointerConfig={{
+                pointerStripUptoDataPoint: true,
+                pointerStripColor: "#0091FF",
+                pointerStripWidth: 1.5,
+                strokeDashArray: [2, 5],
+                pointerColor: "#0091FF",
+                radius: 5,
+                pointerLabelWidth: 85,
+                pointerLabelHeight: 35,
+                pointerLabelComponent: (items: any) => {
+                  if (!items || items.length === 0) return null;
+                  return (
+                    <View
+                      style={{
+                        paddingHorizontal: 8,
+                        paddingVertical: 4,
+                        backgroundColor: "#ffffff",
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: "#e0e0e0",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginTop: -25,
+                        marginLeft: -10,
+                      }}
+                    >
+                      <Text style={{ fontSize: 9, fontWeight: "900", color: Colors.textPrimary }}>
+                        {formatCurrency(items[0].value * 100)}
+                      </Text>
+                    </View>
+                  );
+                },
+              }}
           <View className="items-center" style={{ marginLeft: -15 }}>
             <LineChart
               data={netWorthDataPoints}
@@ -390,9 +559,64 @@ export default function AnalyticsScreen() {
             </Text>
             <Text className="text-[10px] font-bold text-gray-400 mt-0.5">
               {dateRangeStr}
+        {/* 3. Double Line Graph of Cash Flow (Green & Red Overlapping Theme) */}
+        <View className="border border-borderLight rounded-2xl p-5 bg-background mb-6">
+          <View className="items-center mb-4">
+            <Text className="text-sm font-black text-textPrimary">
+              Cashflow Trend
+            </Text>
+            <Text className="text-[10px] font-bold text-gray-400 mt-0.5">
+              {dateRangeStr}
             </Text>
           </View>
 
+          <View className="items-center" style={{ marginLeft: -15 }}>
+            <LineChart
+              data={inflowDataPoints}
+              data2={outflowDataPoints}
+              height={140}
+              width={chartWidth}
+              spacing={lineSpacing}
+              initialSpacing={10}
+              endSpacing={10}
+              curved
+              areaChart
+              color1={Colors.success}
+              color2={Colors.actionPrimary}
+              thickness={2.5}
+              // Overlapping opacity fills
+              startFillColor1={Colors.success}
+              endFillColor1={Colors.success}
+              startOpacity1={0.25}
+              endOpacity1={0.01}
+              startFillColor2={Colors.actionPrimary}
+              endFillColor2={Colors.actionPrimary}
+              startOpacity2={0.25}
+              endOpacity2={0.01}
+              rulesType="dashed"
+              rulesColor={Colors.borderLight}
+              noOfSections={3}
+              yAxisColor="transparent"
+              xAxisColor="transparent"
+              yAxisLabelWidth={38}
+              yAxisTextStyle={{ color: Colors.textSecondary, fontSize: 8, fontWeight: "bold" }}
+              xAxisLabelTextStyle={{ color: Colors.textSecondary, fontSize: 8, fontWeight: "black" }}
+              dataPointsColor1={Colors.success}
+              dataPointsColor2={Colors.actionPrimary}
+              dataPointsRadius={3}
+              formatYLabel={formatShortCurrency}
+            />
+          </View>
+
+          {/* Centered Legend Indicators at the Bottom */}
+          <View className="flex-row justify-center space-x-6 mt-4 border-t border-borderLight pt-4">
+            <View className="flex-row items-center">
+              <View className="w-2.5 h-2.5 bg-success rounded-full mr-2" />
+              <Text className="text-[10px] font-black uppercase tracking-wider text-textSecondary">Inflow</Text>
+            </View>
+            <View className="flex-row items-center" style={{ marginLeft: 24 }}>
+              <View className="w-2.5 h-2.5 bg-actionPrimary rounded-full mr-2" />
+              <Text className="text-[10px] font-black uppercase tracking-wider text-textSecondary">Outflow</Text>
           <View className="items-center" style={{ marginLeft: -15 }}>
             <LineChart
               data={inflowDataPoints}
@@ -481,6 +705,46 @@ export default function AnalyticsScreen() {
                   )}
                 />
               )}
+          </View>
+        </View>
+
+        {/* 4. Doughnut Chart for Core Networks */}
+        <View className="border border-borderLight rounded-2xl p-5 bg-background mb-6">
+          <Text className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-4">
+            Core Networks Allocation
+          </Text>
+
+          <View className="flex-row items-center justify-between">
+            {/* Doughnut Chart */}
+            <View className="w-[130px] h-[130px] justify-center items-center">
+              {totalBalance === 0 ? (
+                <View className="w-[120px] h-[120px] rounded-full border-[16px] border-borderLight justify-center items-center">
+                  <Text className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none">
+                    Total
+                  </Text>
+                  <Text className="text-xs font-black text-textPrimary mt-1">
+                    ₱0
+                  </Text>
+                </View>
+              ) : (
+                <PieChart
+                  data={pieData}
+                  donut
+                  radius={60}
+                  innerRadius={44}
+                  innerCircleColor={Colors.background}
+                  centerLabelComponent={() => (
+                    <View style={{ justifyContent: "center", alignItems: "center" }}>
+                      <Text style={{ fontSize: 8, fontWeight: "bold", color: Colors.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                        Total
+                      </Text>
+                      <Text style={{ fontSize: 11, fontWeight: "900", color: Colors.textPrimary, marginTop: 2 }}>
+                        {formatCurrency(totalBalance)}
+                      </Text>
+                    </View>
+                  )}
+                />
+              )}
             </View>
 
             {/* Legend / Info */}
@@ -514,7 +778,65 @@ export default function AnalyticsScreen() {
                   + {networkBalances.length - 5} More Networks
                 </Text>
               )}
+            {/* Legend / Info */}
+            <View className="flex-1 ml-4 space-y-3">
+              {networkBalances.slice(0, 5).map((node) => {
+                const IconComponent = iconMap[node.type] || Shield;
+                return (
+                  <View key={node.id} className="flex-row items-center justify-between" style={{ marginBottom: 6 }}>
+                    <View className="flex-row items-center flex-1 mr-2">
+                      <View 
+                        style={{ backgroundColor: node.colorCode }} 
+                        className="w-5 h-5 rounded-md items-center justify-center mr-2"
+                      >
+                        <IconComponent size={10} color={Colors.background} strokeWidth={2.5} />
+                      </View>
+                      <Text 
+                        numberOfLines={1} 
+                        className="text-[10px] font-bold text-textPrimary uppercase tracking-wider flex-1"
+                      >
+                        {node.name}
+                      </Text>
+                    </View>
+                    <Text className="text-[10px] font-black text-textSecondary">
+                      {formatCurrency(node.balance)}
+                    </Text>
+                  </View>
+                );
+              })}
+              {networkBalances.length > 5 && (
+                <Text className="text-[8px] text-gray-400 uppercase font-bold tracking-widest text-right mt-1">
+                  + {networkBalances.length - 5} More Networks
+                </Text>
+              )}
             </View>
+          </View>
+        </View>
+
+        {/* 5. Two Cards Side by Side (Savings & Investments) */}
+        <View className="flex-row space-x-3">
+          <View className="flex-1 border border-borderLight rounded-2xl p-5 bg-backgroundDark">
+            <View className="flex-row items-center mb-2">
+              <Landmark size={14} stroke={Colors.background} strokeWidth={2.5} />
+              <Text className="text-[9px] font-black text-background/80 uppercase tracking-widest ml-1.5">
+                Total Savings
+              </Text>
+            </View>
+            <Text className="text-base font-black text-background">
+              {formatCurrency(data.totalSavings)}
+            </Text>
+          </View>
+
+          <View className="flex-1 border border-borderLight rounded-2xl p-5 bg-actionPrimary" style={{ marginLeft: 8 }}>
+            <View className="flex-row items-center mb-2">
+              <TrendingUp size={14} stroke={Colors.background} strokeWidth={2.5} />
+              <Text className="text-[9px] font-black text-background/80 uppercase tracking-widest ml-1.5">
+                Investments
+              </Text>
+            </View>
+            <Text className="text-base font-black text-background">
+              {formatCurrency(data.totalInvestments)}
+            </Text>
           </View>
         </View>
 
