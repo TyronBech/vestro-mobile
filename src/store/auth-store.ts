@@ -4,6 +4,7 @@ import { apiLogin, apiSignup, apiVerifySupabase, apiForgotPassword, apiResetPass
 import { fetchProfile } from "../services/api/endpoints/profile";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
 import { AuthState, UserResponse } from "../types";
+import { setTokenRefreshedCallback, setUnauthorizedCallback } from "../services/api/client";
 
 let activeGoogleLoginPromise: Promise<{ requires2fa: boolean; user: UserResponse | null }> | null = null;
 
@@ -24,24 +25,63 @@ export const useAuthStore = create<AuthState>((set) => ({
       );
       if (storedToken) {
         set({ accessToken: storedToken });
-        // Fetch profile to verify token and load user data
-        const profileResponse = await fetchProfile();
-        set({
-          user: profileResponse.data,
-          isAuthenticated: true,
-        });
+
+        // Load cached user profile first
+        const cachedUserStr = await SecureStore.getItemAsync(
+          SECURE_STORE_KEYS.USER_PROFILE,
+          SECURE_STORE_OPTIONS
+        );
+        if (cachedUserStr) {
+          const cachedUser = JSON.parse(cachedUserStr);
+          set({ user: cachedUser, isAuthenticated: true });
+        }
+
+        try {
+          // Fetch profile to verify token and load latest user data
+          const profileResponse = await fetchProfile();
+          set({
+            user: profileResponse.data,
+            isAuthenticated: true,
+          });
+          await SecureStore.setItemAsync(
+            SECURE_STORE_KEYS.USER_PROFILE,
+            JSON.stringify(profileResponse.data),
+            SECURE_STORE_OPTIONS
+          );
+        } catch (fetchErr: any) {
+          // If the token is invalid or expired (401)
+          if (fetchErr.status === 401) {
+            console.log("[Auth Store] Token expired during initialization. Attempting session lock.");
+            
+            const currentUser = useAuthStore.getState().user;
+            if (currentUser) {
+              set({ isSessionLocked: true });
+              return;
+            }
+          }
+          // For other errors (like network/offline), we keep the cached session as is.
+          // If it was a 401 but no cached user was found, propagate to outer catch block to logout.
+          if (fetchErr.status === 401) {
+            throw fetchErr;
+          }
+        }
       }
     } catch (err) {
-      // If token is invalid or expired, clear it
+      console.log("[Auth Store] Auth initialization failed, logging out:", err);
+      // Clean up all auth stores
       try {
         await SecureStore.deleteItemAsync(
           SECURE_STORE_KEYS.ACCESS_TOKEN,
           SECURE_STORE_OPTIONS
         );
-      } catch (e) {
-        console.error("Failed to clear invalid token", e);
-      }
-      set({ accessToken: null, user: null, isAuthenticated: false });
+      } catch (e) {}
+      try {
+        await SecureStore.deleteItemAsync(
+          SECURE_STORE_KEYS.USER_PROFILE,
+          SECURE_STORE_OPTIONS
+        );
+      } catch (e) {}
+      set({ accessToken: null, user: null, isAuthenticated: false, isSessionLocked: false });
     }
   },
 
@@ -55,6 +95,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         await SecureStore.setItemAsync(
           SECURE_STORE_KEYS.ACCESS_TOKEN,
           token,
+          SECURE_STORE_OPTIONS
+        );
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.USER_PROFILE,
+          JSON.stringify(user),
           SECURE_STORE_OPTIONS
         );
         set({
@@ -89,6 +134,11 @@ export const useAuthStore = create<AuthState>((set) => ({
           token,
           SECURE_STORE_OPTIONS
         );
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.USER_PROFILE,
+          JSON.stringify(user),
+          SECURE_STORE_OPTIONS
+        );
         set({
           accessToken: token,
           user,
@@ -114,6 +164,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         await SecureStore.setItemAsync(
           SECURE_STORE_KEYS.ACCESS_TOKEN,
           token,
+          SECURE_STORE_OPTIONS
+        );
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.USER_PROFILE,
+          JSON.stringify(user),
           SECURE_STORE_OPTIONS
         );
         set({
@@ -147,6 +202,11 @@ export const useAuthStore = create<AuthState>((set) => ({
           await SecureStore.setItemAsync(
             SECURE_STORE_KEYS.ACCESS_TOKEN,
             token,
+            SECURE_STORE_OPTIONS
+          );
+          await SecureStore.setItemAsync(
+            SECURE_STORE_KEYS.USER_PROFILE,
+            JSON.stringify(user),
             SECURE_STORE_OPTIONS
           );
           set({
@@ -191,6 +251,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (err) {
       console.error("Failed to delete biometric key on logout", err);
     }
+    try {
+      await SecureStore.deleteItemAsync(
+        SECURE_STORE_KEYS.USER_PROFILE,
+        SECURE_STORE_OPTIONS
+      );
+    } catch (err) {
+      console.error("Failed to delete user profile on logout", err);
+    }
     set({ user: null, accessToken: null, isAuthenticated: false, isSessionLocked: false });
   },
 
@@ -220,6 +288,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await fetchProfile();
       set({ user: response.data });
+      await SecureStore.setItemAsync(
+        SECURE_STORE_KEYS.USER_PROFILE,
+        JSON.stringify(response.data),
+        SECURE_STORE_OPTIONS
+      );
     } catch (err: any) {
       console.error("Failed to refresh profile in auth store", err);
       throw err;
@@ -255,6 +328,11 @@ export const useAuthStore = create<AuthState>((set) => ({
           token,
           SECURE_STORE_OPTIONS
         );
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.USER_PROFILE,
+          JSON.stringify(updatedUser),
+          SECURE_STORE_OPTIONS
+        );
         set({
           accessToken: token,
           user: updatedUser,
@@ -271,3 +349,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 }));
+
+// Register API client callbacks to handle token refresh and auto session lock
+setTokenRefreshedCallback((token) => {
+  useAuthStore.setState({ accessToken: token });
+});
+
+setUnauthorizedCallback(() => {
+  if (useAuthStore.getState().isAuthenticated) {
+    useAuthStore.setState({ isSessionLocked: true });
+  }
+});
+
