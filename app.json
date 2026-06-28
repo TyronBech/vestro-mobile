@@ -8,6 +8,11 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "statusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#fdfefe",
+      "translucent": false
+    },
     "plugins": [
       "expo-router",
       "expo-secure-store",
@@ -27,7 +32,11 @@
         "backgroundColor": "#ffffff"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.vestro"
+      "package": "com.anonymous.vestro",
+      "navigationBar": {
+        "barStyle": "dark-content",
+        "backgroundColor": "#fdfefe"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
