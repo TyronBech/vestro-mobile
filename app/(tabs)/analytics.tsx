@@ -26,6 +26,7 @@ import { useUIStore } from "../../src/store/ui-store";
 import { useToastStore } from "../../src/store/toast-store";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+import { useAuthStore } from "../../src/store/auth-store";
 const containerPadding = 24;
 const cardPadding = 20;
 const chartWidth = SCREEN_WIDTH - containerPadding * 2 - cardPadding * 2;
@@ -56,6 +57,7 @@ export default function AnalyticsScreen() {
 
   const budgetUpdateTrigger = useUIStore((state) => state.budgetUpdateTrigger);
   const toastStore = useToastStore();
+  const { isSessionLocked } = useAuthStore();
 
   const loadData = useCallback(async (showLoadingIndicator = true) => {
     if (showLoadingIndicator) setLoading(true);
@@ -93,8 +95,10 @@ export default function AnalyticsScreen() {
   }, [loadData]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData, budgetUpdateTrigger]);
+    if (!isSessionLocked) {
+      loadData();
+    }
+  }, [loadData, budgetUpdateTrigger, isSessionLocked]);
 
   const handleSaveSalary = async () => {
     const salaryPesos = parseFloat(inputSalary);

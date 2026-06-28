@@ -24,7 +24,7 @@ import { fetchCashFlows, CashFlow } from "../../src/services/api/endpoints/cash-
 
 
 export default function HomeTabScreen() {
-  const { user, refreshProfile } = useAuthStore();
+  const { user, refreshProfile, isSessionLocked } = useAuthStore();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [connectionStatus, setConnectionStatus] = useState<
@@ -97,8 +97,10 @@ export default function HomeTabScreen() {
   }, [refreshProfile]);
 
   useEffect(() => {
-    checkConnection();
-  }, [checkConnection]);
+    if (!isSessionLocked) {
+      checkConnection();
+    }
+  }, [checkConnection, isSessionLocked]);
 
   const displayAssets = macroAssets;
   const displayCashFlows = cashFlows;
