@@ -11,6 +11,8 @@ import Toast from "../src/components/toast";
 import BudgetConfigModal from "../src/components/budget-config-modal";
 import MacroAssetModal from "../src/components/macro-asset-modal";
 import CoreNetworkModal from "../src/components/core-network-modal";
+import SweepModal from "../src/components/sweep-modal";
+import CashFlowModal from "../src/components/cash-flow-modal";
 import SessionLockScreen from "../src/components/session-lock-screen";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -180,6 +182,8 @@ export default function RootLayout() {
         <BudgetConfigModal />
         <MacroAssetModal />
         <CoreNetworkModal />
+        <SweepModal />
+        <CashFlowModal />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

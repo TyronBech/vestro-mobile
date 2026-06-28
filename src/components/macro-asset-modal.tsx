@@ -63,6 +63,7 @@ export default function MacroAssetModal() {
   };
 
   const handleSave = async () => {
+    if (saving) return;
     if (!bankName.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Bank Name is required.", "error");

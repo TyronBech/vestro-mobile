@@ -26,6 +26,8 @@ import {
   ArrowUpRight,
   TrendingUp,
   Sliders,
+  RefreshCw,
+  DollarSign,
 } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
 import { useUIStore } from "../store/ui-store";
@@ -105,9 +107,29 @@ export default function CustomTabBar({
     useUIStore.getState().openCoreNetworkModal();
   };
 
-  // Animated styles for the fanned-out bubble buttons (arc positioning)
-  // Left Bubble: Add Income (-75, -75)
-  const leftBubbleStyle = useAnimatedStyle(() => {
+  const handleSweepPress = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {
+      console.log("Haptics ignored:", e);
+    }
+    setIsOpen(false);
+    useUIStore.getState().openSweepModal();
+  };
+
+  const handleCashFlowPress = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {
+      console.log("Haptics ignored:", e);
+    }
+    setIsOpen(false);
+    useUIStore.getState().openCashFlowModal();
+  };
+
+  // Animated styles for the fanned-out bubble menu (Pascal's triangle layout)
+  // Bubble 1 (Left): Budget Config (-75, -75)
+  const bubble1Style = useAnimatedStyle(() => {
     const x = -75 * animationProgress.value;
     const y = -75 * animationProgress.value;
     return {
@@ -120,11 +142,13 @@ export default function CustomTabBar({
     };
   });
 
-  // Center Bubble: Add Expense (0, -105)
-  const centerBubbleStyle = useAnimatedStyle(() => {
+  // Bubble 2 (Center): Macro Asset (0, -105)
+  const bubble2Style = useAnimatedStyle(() => {
+    const x = 0 * animationProgress.value;
     const y = -105 * animationProgress.value;
     return {
       transform: [
+        { translateX: x },
         { translateY: y },
         { scale: animationProgress.value },
       ],
@@ -132,10 +156,38 @@ export default function CustomTabBar({
     };
   });
 
-  // Right Bubble: Add Savings (75, -75)
-  const rightBubbleStyle = useAnimatedStyle(() => {
+  // Bubble 3 (Right): Network (75, -75)
+  const bubble3Style = useAnimatedStyle(() => {
     const x = 75 * animationProgress.value;
     const y = -75 * animationProgress.value;
+    return {
+      transform: [
+        { translateX: x },
+        { translateY: y },
+        { scale: animationProgress.value },
+      ],
+      opacity: animationProgress.value,
+    };
+  });
+
+  // Bubble 4 (Sweep - on top, between Config and Macro Asset): (-58.5, -152)
+  const bubble4Style = useAnimatedStyle(() => {
+    const x = -58.5 * animationProgress.value;
+    const y = -152 * animationProgress.value;
+    return {
+      transform: [
+        { translateX: x },
+        { translateY: y },
+        { scale: animationProgress.value },
+      ],
+      opacity: animationProgress.value,
+    };
+  });
+
+  // Bubble 5 (Cash Flow - on top, between Macro Asset and Network): (58.5, -152)
+  const bubble5Style = useAnimatedStyle(() => {
+    const x = 58.5 * animationProgress.value;
+    const y = -152 * animationProgress.value;
     return {
       transform: [
         { translateX: x },
@@ -181,9 +233,9 @@ export default function CustomTabBar({
         }}
         pointerEvents="box-none"
       >
-        {/* Left: Modify Budget Configuration */}
+        {/* Bubble 1: Modify Budget Configuration */}
         <Animated.View
-          style={[styles.bubbleWrapper, leftBubbleStyle]}
+          style={[styles.bubbleWrapper, bubble1Style]}
           pointerEvents={isOpen ? "auto" : "none"}
         >
           <TouchableOpacity
@@ -201,9 +253,9 @@ export default function CustomTabBar({
           </Text>
         </Animated.View>
 
-        {/* Center: Add Macro Asset */}
+        {/* Bubble 2: Add Macro Asset */}
         <Animated.View
-          style={[styles.bubbleWrapper, centerBubbleStyle]}
+          style={[styles.bubbleWrapper, bubble2Style]}
           pointerEvents={isOpen ? "auto" : "none"}
         >
           <TouchableOpacity
@@ -221,9 +273,9 @@ export default function CustomTabBar({
           </Text>
         </Animated.View>
 
-        {/* Right: Add Network */}
+        {/* Bubble 3: Add Network */}
         <Animated.View
-          style={[styles.bubbleWrapper, rightBubbleStyle]}
+          style={[styles.bubbleWrapper, bubble3Style]}
           pointerEvents={isOpen ? "auto" : "none"}
         >
           <TouchableOpacity
@@ -238,6 +290,46 @@ export default function CustomTabBar({
             className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
           >
             Network
+          </Text>
+        </Animated.View>
+
+        {/* Bubble 4: Custom Sweep */}
+        <Animated.View
+          style={[styles.bubbleWrapper, bubble4Style]}
+          pointerEvents={isOpen ? "auto" : "none"}
+        >
+          <TouchableOpacity
+            onPress={handleSweepPress}
+            className="w-12 h-12 rounded-full items-center justify-center border border-border"
+            style={{ backgroundColor: Colors.actionPrimary }}
+          >
+            <RefreshCw size={20} stroke={Colors.background} strokeWidth={2.5} />
+          </TouchableOpacity>
+          <Text
+            style={styles.bubbleText}
+            className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
+          >
+            Sweep
+          </Text>
+        </Animated.View>
+
+        {/* Bubble 5: Cash Flow / Activity */}
+        <Animated.View
+          style={[styles.bubbleWrapper, bubble5Style]}
+          pointerEvents={isOpen ? "auto" : "none"}
+        >
+          <TouchableOpacity
+            onPress={handleCashFlowPress}
+            className="w-12 h-12 rounded-full items-center justify-center border border-border"
+            style={{ backgroundColor: Colors.actionPrimary }}
+          >
+            <DollarSign size={20} stroke={Colors.background} strokeWidth={2.5} />
+          </TouchableOpacity>
+          <Text
+            style={styles.bubbleText}
+            className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
+          >
+            Log Activity
           </Text>
         </Animated.View>
       </View>

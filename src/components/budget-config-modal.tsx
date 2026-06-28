@@ -61,6 +61,7 @@ export default function BudgetConfigModal() {
   const wantsExceeded = valWants > 30;
 
   const handleSave = async () => {
+    if (saving) return;
     // 1. Validation for negative values
     if (valNeeds < 0 || valWants < 0 || valSavings < 0 || valInvestments < 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});

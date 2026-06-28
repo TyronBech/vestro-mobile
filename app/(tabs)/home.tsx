@@ -20,6 +20,7 @@ import { useRouter } from "expo-router";
 import { fetchMacroAssets, MacroAsset } from "../../src/services/api/endpoints/macro-assets";
 import { MacroAssetStack } from "../../src/components/MacroAssetStack";
 import { fetchCashFlows, CashFlow } from "../../src/services/api/endpoints/cash-flows";
+import { useUIStore } from "../../src/store/ui-store";
 
 
 
@@ -34,6 +35,9 @@ export default function HomeTabScreen() {
   const [macroAssets, setMacroAssets] = useState<MacroAsset[]>([]);
   const [cashFlows, setCashFlows] = useState<CashFlow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  const networkUpdateTrigger = useUIStore((state) => state.networkUpdateTrigger);
+  const budgetUpdateTrigger = useUIStore((state) => state.budgetUpdateTrigger);
 
   // Calculate net worth dynamically by summing up live macro asset balances
   const balanceCents = macroAssets.reduce((sum, asset) => sum + asset.balance, 0); 
@@ -100,7 +104,7 @@ export default function HomeTabScreen() {
     if (!isSessionLocked) {
       checkConnection();
     }
-  }, [checkConnection, isSessionLocked]);
+  }, [checkConnection, isSessionLocked, networkUpdateTrigger, budgetUpdateTrigger]);
 
   const displayAssets = macroAssets;
   const displayCashFlows = cashFlows;

@@ -12,3 +12,22 @@ export async function fetchCashFlows(): Promise<Result<CashFlow[], string>> {
     return err(error.message || 'Failed to fetch cash flows');
   }
 }
+
+export interface CreateCashFlowParams {
+  coreNetworkId: string;
+  amount: number; // in cents
+  type: 'INFLOW' | 'OUTFLOW';
+  notes?: string;
+}
+
+export async function createCashFlow(params: CreateCashFlowParams): Promise<Result<CashFlow, string>> {
+  try {
+    const response = await apiClient<{ data: CashFlow }>('/cash-flows', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+    return ok(response.data);
+  } catch (error: any) {
+    return err(error.message || 'Failed to create cash flow');
+  }
+}
