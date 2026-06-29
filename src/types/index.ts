@@ -194,3 +194,52 @@ export interface CashFlow {
     balance: number;
   };
 }
+
+export interface CreditCard {
+  id: string;
+  userId: string;
+  cardName: string;
+  creditLimit: number; // in cents
+  statementCutoffDay: number;
+  paymentDueDay: number;
+  unbilledSpend: number; // in cents
+  midCyclePaid: number; // in cents
+  macroAssetId: string | null;
+  macroAsset?: MacroAsset | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCreditCardParams {
+  cardName: string;
+  creditLimit: number; // in cents
+  statementCutoffDay: number;
+  paymentDueDay: number;
+  macroAssetId?: string | null;
+}
+
+export interface UpdateCreditCardParams {
+  cardName?: string;
+  creditLimit?: number; // in cents
+  statementCutoffDay?: number;
+  paymentDueDay?: number;
+  macroAssetId?: string | null;
+}
+
+export interface CreditShieldCardStatus {
+  id: string;
+  cardName: string;
+  creditLimit: number;
+  unbilledSpend: number;
+  midCyclePaid: number;
+  effectiveSpend: number;
+  utilization: number;
+  status: 'SAFE' | 'WARNING' | 'DANGER';
+  suggestedPayment: number;
+  message: string;
+}
+
+export interface CreditShieldStatus {
+  cards: CreditShieldCardStatus[];
+  overallStatus: 'SAFE' | 'WARNING' | 'DANGER';
+}
