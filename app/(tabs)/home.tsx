@@ -15,12 +15,14 @@ import { useAuthStore } from "../../src/store/auth-store";
 import { fetchProfile } from "../../src/services/api/endpoints/profile";
 import { apiClient } from "../../src/services/api/client";
 import { Colors } from "../../constants/colors";
-import { CreditCard, Eye, EyeOff, Bell, Activity, ArrowDownLeft, ArrowUpRight, Plus } from "lucide-react-native";
+import { CreditCard as CardIcon, Eye, EyeOff, Bell, Activity, ArrowDownLeft, ArrowUpRight, Plus } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { fetchMacroAssets, MacroAsset } from "../../src/services/api/endpoints/macro-assets";
 import { MacroAssetStack } from "../../src/components/MacroAssetStack";
 import { fetchCashFlows, CashFlow } from "../../src/services/api/endpoints/cash-flows";
 import { useUIStore } from "../../src/store/ui-store";
+import { fetchCreditCards, CreditCard } from "../../src/services/api/endpoints/credit-cards";
+import { CreditCardStack } from "../../src/components/CreditCardStack";
 
 
 
@@ -34,6 +36,7 @@ export default function HomeTabScreen() {
   const [showBalance, setShowBalance] = useState(true);
   const [macroAssets, setMacroAssets] = useState<MacroAsset[]>([]);
   const [cashFlows, setCashFlows] = useState<CashFlow[]>([]);
+  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const networkUpdateTrigger = useUIStore((state) => state.networkUpdateTrigger);
@@ -52,6 +55,10 @@ export default function HomeTabScreen() {
         const assetsRes = await fetchMacroAssets();
         if (assetsRes.ok) {
           setMacroAssets(assetsRes.value);
+        }
+        const cardsRes = await fetchCreditCards();
+        if (cardsRes.ok) {
+          setCreditCards(cardsRes.value);
         }
         const flowsRes = await fetchCashFlows();
         if (flowsRes.ok) {
@@ -81,6 +88,10 @@ export default function HomeTabScreen() {
         const assetsRes = await fetchMacroAssets();
         if (assetsRes.ok) {
           setMacroAssets(assetsRes.value);
+        }
+        const cardsRes = await fetchCreditCards();
+        if (cardsRes.ok) {
+          setCreditCards(cardsRes.value);
         }
         const flowsRes = await fetchCashFlows();
         if (flowsRes.ok) {
@@ -183,7 +194,7 @@ export default function HomeTabScreen() {
             {/* Top Row: Net Worth Label & Eye Icon */}
             <View className="flex-row justify-between items-center mb-6">
               <View className="flex-row items-center">
-                <CreditCard size={18} stroke={Colors.background} strokeWidth={2.5} />
+                <CardIcon size={18} stroke={Colors.background} strokeWidth={2.5} />
                 <Text className="text-background text-[11px] font-bold uppercase tracking-widest ml-2">
                   Net Worth
                 </Text>
@@ -236,6 +247,27 @@ export default function HomeTabScreen() {
           </TouchableOpacity>
         ) : (
           <MacroAssetStack assets={displayAssets} showBalance={showBalance} />
+        )}
+
+        {/* Credit Card Stack Section */}
+        {creditCards.length === 0 ? (
+          <TouchableOpacity
+            onPress={() => useUIStore.getState().openCreditCardModal()}
+            className="border-2 border-dashed border-border rounded-2xl p-6 bg-backgroundLight/50 items-center justify-center mb-6"
+            style={{ height: 210 }}
+          >
+            <View className="w-12 h-12 rounded-full bg-backgroundDark/5 items-center justify-center mb-3">
+              <Plus size={24} stroke={Colors.textPrimary} strokeWidth={3} />
+            </View>
+            <Text className="text-sm font-black text-textPrimary uppercase tracking-wider text-center">
+              Add Credit Card
+            </Text>
+            <Text className="text-xs font-bold text-textSecondary text-center leading-relaxed mt-1 max-w-[280px]">
+              Set up your credit cards to manage unbilled limits, cutoff alerts, and automated cash buffers.
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <CreditCardStack cards={creditCards} showBalance={showBalance} />
         )}
 
         {/* Latest Activity Card */}

@@ -28,9 +28,11 @@ import {
   Sliders,
   RefreshCw,
   DollarSign,
+  CreditCard as CreditCardIcon,
 } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
 import { useUIStore } from "../store/ui-store";
+import { fetchCreditCards } from "../services/api/endpoints/credit-cards";
 
 const UserIcon = ({ color, filled }: { color: string; filled: boolean }) => {
   if (filled) {
@@ -44,7 +46,12 @@ const UserIcon = ({ color, filled }: { color: string; filled: boolean }) => {
     return (
       <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
         <Circle cx="12" cy="7" r="4" stroke={color} strokeWidth="2.5" />
-        <Path d="M4 21v-1c0-3.3 2.7-6 6-6h4c3.3 0 6 2.7 6 6v1" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+        <Path
+          d="M4 21v-1c0-3.3 2.7-6 6-6h4c3.3 0 6 2.7 6 6v1"
+          stroke={color}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
       </Svg>
     );
   }
@@ -127,6 +134,20 @@ export default function CustomTabBar({
     useUIStore.getState().openCashFlowModal();
   };
 
+  const handleCreditCardPress = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {
+      console.log("Haptics ignored:", e);
+    }
+
+    // Close the bubble menu first to maintain clean transitions
+    setIsOpen(false);
+
+    // Open modal. Since editingCreditCard is null, it defaults to the custom CHOOSE view inside the modal.
+    useUIStore.getState().openCreditCardModal(null);
+  };
+
   // Animated styles for the fanned-out bubble menu (Pascal's triangle layout)
   // Bubble 1 (Left): Budget Config (-75, -75)
   const bubble1Style = useAnimatedStyle(() => {
@@ -198,6 +219,20 @@ export default function CustomTabBar({
     };
   });
 
+  // Bubble 6 (Credit Card - centered on top above Macro Asset): (0, -195)
+  const bubble6Style = useAnimatedStyle(() => {
+    const x = 0 * animationProgress.value;
+    const y = -195 * animationProgress.value;
+    return {
+      transform: [
+        { translateX: x },
+        { translateY: y },
+        { scale: animationProgress.value },
+      ],
+      opacity: animationProgress.value,
+    };
+  });
+
   // Rotate center button '+' when open
   const plusIconStyle = useAnimatedStyle(() => {
     const rotation = `${animationProgress.value * 45}deg`;
@@ -208,7 +243,11 @@ export default function CustomTabBar({
 
   return (
     <View
-      style={isOpen ? styles.fullContainer : [styles.floatingContainer, { height: TAB_BAR_HEIGHT }]}
+      style={
+        isOpen
+          ? styles.fullContainer
+          : [styles.floatingContainer, { height: TAB_BAR_HEIGHT }]
+      }
       pointerEvents="box-none"
     >
       {/* Backdrop backdrop that dims screen and closes menu when pressed */}
@@ -263,7 +302,11 @@ export default function CustomTabBar({
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
             style={{ backgroundColor: Colors.actionPrimary }}
           >
-            <ArrowUpRight size={20} stroke={Colors.background} strokeWidth={2.5} />
+            <ArrowUpRight
+              size={20}
+              stroke={Colors.background}
+              strokeWidth={2.5}
+            />
           </TouchableOpacity>
           <Text
             style={styles.bubbleText}
@@ -283,7 +326,11 @@ export default function CustomTabBar({
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
             style={{ backgroundColor: Colors.backgroundDark }}
           >
-            <ChartNetwork size={20} stroke={Colors.background} strokeWidth={2.5} />
+            <ChartNetwork
+              size={20}
+              stroke={Colors.background}
+              strokeWidth={2.5}
+            />
           </TouchableOpacity>
           <Text
             style={styles.bubbleText}
@@ -323,13 +370,41 @@ export default function CustomTabBar({
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
             style={{ backgroundColor: Colors.actionPrimary }}
           >
-            <DollarSign size={20} stroke={Colors.background} strokeWidth={2.5} />
+            <DollarSign
+              size={20}
+              stroke={Colors.background}
+              strokeWidth={2.5}
+            />
           </TouchableOpacity>
           <Text
             style={styles.bubbleText}
             className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
           >
             Log Activity
+          </Text>
+        </Animated.View>
+
+        {/* Bubble 6: Credit Card */}
+        <Animated.View
+          style={[styles.bubbleWrapper, bubble6Style]}
+          pointerEvents={isOpen ? "auto" : "none"}
+        >
+          <TouchableOpacity
+            onPress={handleCreditCardPress}
+            className="w-12 h-12 rounded-full items-center justify-center border border-border"
+            style={{ backgroundColor: Colors.backgroundDark }}
+          >
+            <CreditCardIcon
+              size={20}
+              stroke={Colors.background}
+              strokeWidth={2.5}
+            />
+          </TouchableOpacity>
+          <Text
+            style={styles.bubbleText}
+            className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
+          >
+            Credit Card
           </Text>
         </Animated.View>
       </View>
@@ -382,14 +457,21 @@ export default function CustomTabBar({
           // Render Center Action Button (Add Transaction)
           if (route.name === "add-transaction") {
             return (
-              <View key={route.key} className="items-center justify-center flex-1">
+              <View
+                key={route.key}
+                className="items-center justify-center flex-1"
+              >
                 <TouchableOpacity
                   onPress={onPress}
                   className="w-16 h-12 rounded-full items-center justify-center"
                   style={{ backgroundColor: Colors.actionPrimary }}
                 >
                   <Animated.View style={plusIconStyle}>
-                    <Plus size={24} stroke={Colors.background} strokeWidth={3} />
+                    <Plus
+                      size={24}
+                      stroke={Colors.background}
+                      strokeWidth={3}
+                    />
                   </Animated.View>
                 </TouchableOpacity>
               </View>

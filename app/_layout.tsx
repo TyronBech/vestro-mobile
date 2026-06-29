@@ -13,6 +13,7 @@ import MacroAssetModal from "../src/components/macro-asset-modal";
 import CoreNetworkModal from "../src/components/core-network-modal";
 import SweepModal from "../src/components/sweep-modal";
 import CashFlowModal from "../src/components/cash-flow-modal";
+import CreditCardModal from "../src/components/credit-card-modal";
 import SessionLockScreen from "../src/components/session-lock-screen";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -184,6 +185,7 @@ export default function RootLayout() {
         <CoreNetworkModal />
         <SweepModal />
         <CashFlowModal />
+        <CreditCardModal />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

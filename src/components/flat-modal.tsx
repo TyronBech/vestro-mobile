@@ -53,13 +53,18 @@ export default function FlatModal({
       transparent
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
+      <View style={styles.container}>
+        {/* Backdrop (closes modal on press) */}
+        <Pressable style={styles.backdrop} onPress={onClose} />
+
+        {/* Modal content container */}
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : (keyboardVisible ? "padding" : undefined)}
           style={styles.keyboardView}
           pointerEvents="box-none"
         >
-          <Pressable style={styles.modalContent} className="border-2 border-border bg-background rounded-2xl p-6">
+          {/* Modal Content */}
+          <View style={styles.modalContent} className="border-2 border-border bg-background rounded-2xl p-6">
             {/* Header */}
             <View className="flex-row justify-between items-center mb-6">
               <View className="flex-row items-center flex-1 mr-2">
@@ -74,21 +79,28 @@ export default function FlatModal({
             </View>
 
             {children}
-          </Pressable>
+          </View>
         </KeyboardAvoidingView>
-      </Pressable>
+      </View>
       <Toast />
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  container: {
     flex: 1,
-    backgroundColor: "rgba(55, 55, 55, 0.4)", // flat backdrop tint
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
+  },
+  backdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(55, 55, 55, 0.4)", // flat backdrop tint
   },
   keyboardView: {
     width: "100%",

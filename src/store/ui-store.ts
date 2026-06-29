@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { CoreNetwork } from "../types";
+import { CoreNetwork, CreditCard } from "../types";
 
 interface UIState {
   isBudgetModalOpen: boolean;
@@ -22,6 +22,11 @@ interface UIState {
   isCashFlowModalOpen: boolean;
   openCashFlowModal: () => void;
   closeCashFlowModal: () => void;
+  
+  isCreditCardModalOpen: boolean;
+  editingCreditCard: CreditCard | null;
+  openCreditCardModal: (card?: CreditCard | null) => void;
+  closeCreditCardModal: () => void;
   
   // Counter to trigger data refreshes across screens when budget config updates
   budgetUpdateTrigger: number;
@@ -53,6 +58,11 @@ export const useUIStore = create<UIState>((set) => ({
   isCashFlowModalOpen: false,
   openCashFlowModal: () => set({ isCashFlowModalOpen: true }),
   closeCashFlowModal: () => set({ isCashFlowModalOpen: false }),
+  
+  isCreditCardModalOpen: false,
+  editingCreditCard: null,
+  openCreditCardModal: (card = null) => set({ isCreditCardModalOpen: true, editingCreditCard: card }),
+  closeCreditCardModal: () => set({ isCreditCardModalOpen: false, editingCreditCard: null }),
   
   budgetUpdateTrigger: 0,
   triggerBudgetUpdate: () => set((state) => ({ budgetUpdateTrigger: state.budgetUpdateTrigger + 1 })),
