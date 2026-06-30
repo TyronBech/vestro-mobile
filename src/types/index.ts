@@ -243,3 +243,14 @@ export interface CreditShieldStatus {
   cards: CreditShieldCardStatus[];
   overallStatus: 'SAFE' | 'WARNING' | 'DANGER';
 }
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  title: string;
+  body: string;
+  data: any | null;
+  isRead: boolean;
+  sentAt: string;
+  readAt: string | null;
+}

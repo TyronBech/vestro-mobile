@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import * as Linking from "expo-linking";
 import { useAuthStore } from "../src/store/auth-store";
 import { Colors } from "../constants/colors";
+import { usePushNotifications } from "../src/hooks/usePushNotifications";
 import Toast from "../src/components/toast";
 import BudgetConfigModal from "../src/components/budget-config-modal";
 import MacroAssetModal from "../src/components/macro-asset-modal";
@@ -14,6 +15,7 @@ import CoreNetworkModal from "../src/components/core-network-modal";
 import SweepModal from "../src/components/sweep-modal";
 import CashFlowModal from "../src/components/cash-flow-modal";
 import CreditCardModal from "../src/components/credit-card-modal";
+import NotificationModal from "../src/components/notification-modal";
 import SessionLockScreen from "../src/components/session-lock-screen";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -62,6 +64,9 @@ export default function RootLayout() {
   const { isAuthenticated, accessToken, isSessionLocked, setSessionLocked } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+
+  // Initialize push notification listener & token register
+  usePushNotifications();
 
   useEffect(() => {
     // 1. Initialize auth session
@@ -186,6 +191,7 @@ export default function RootLayout() {
         <SweepModal />
         <CashFlowModal />
         <CreditCardModal />
+        <NotificationModal />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
