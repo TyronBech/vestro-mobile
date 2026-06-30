@@ -17,6 +17,7 @@ import { useToastStore } from "../store/toast-store";
 import { createMacroAsset } from "../services/api/endpoints/macro-assets";
 import { uploadImageToSupabase } from "../utils/upload";
 import { Colors } from "../../constants/colors";
+import { Strings } from "../../constants/string";
 
 export default function MacroAssetModal() {
   const { isMacroAssetModalOpen, closeMacroAssetModal, triggerNetworkUpdate } = useUIStore();
@@ -43,7 +44,7 @@ export default function MacroAssetModal() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        toastStore.show("Permission to access media library is required.", "error");
+        toastStore.show(Strings.validationMediaPermissionRequired, "error");
         return;
       }
 

@@ -13,6 +13,7 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Defs, Rect, RadialGradient, Stop } from "react-native-svg";
 import { Colors } from "../../constants/colors";
+import { Sizes } from "../../constants/sizes";
 import {
   CreditCard as CardIcon,
   ShieldCheck,
@@ -61,7 +62,7 @@ function AssetIcon({ url }: { url: string | null | undefined }) {
   }, [url]);
 
   if (!url || error) {
-    return <CardIcon size={16} color={Colors.background} strokeWidth={2.5} />;
+    return <CardIcon size={Sizes.iconXSmall} color={Colors.background} strokeWidth={Sizes.strokeMedium} />;
   }
 
   return (
@@ -106,18 +107,18 @@ function StackCard({
 
   // Determine health status
   let status: "SAFE" | "WARNING" | "DANGER" = "SAFE";
-  let statusColor = "#10b981"; // emerald-500
+  let statusColor: string = Colors.successAlt;
   let statusBg = "bg-emerald-500/10";
   let StatusIcon = ShieldCheck;
 
   if (utilization >= 50) {
     status = "DANGER";
-    statusColor = Colors.actionPrimary; // #ee4e43
+    statusColor = Colors.actionPrimary;
     statusBg = "bg-red-500/10";
     StatusIcon = ShieldAlert;
   } else if (utilization >= 30) {
     status = "WARNING";
-    statusColor = "#f59e0b"; // amber-500
+    statusColor = Colors.warningAlt;
     statusBg = "bg-amber-500/10";
     StatusIcon = Shield;
   }
@@ -127,10 +128,10 @@ function StackCard({
     utilization >= 50
       ? Colors.actionPrimary
       : utilization >= 30
-        ? "#f59e0b"
+        ? Colors.warningAlt
         : card.creditLimit >= 10000000
-          ? "#d4af37"
-          : "#373737";
+          ? Colors.gold
+          : Colors.backgroundDark;
 
   const animatedStyle = useAnimatedStyle(() => {
     const rawRelative = (cardIndex - topIndexShared.value) % totalCards;
@@ -253,7 +254,7 @@ function StackCard({
                 stopColor={primaryGradientColor}
                 stopOpacity="0.85"
               />
-              <Stop offset="100%" stopColor="#121212" stopOpacity="1" />
+              <Stop offset="100%" stopColor={Colors.darkStopEndAlt} stopOpacity="1" />
             </RadialGradient>
           </Defs>
           <Rect
@@ -279,7 +280,7 @@ function StackCard({
             <View
               className={`flex-row items-center px-2 py-0.5 rounded-full ${statusBg}`}
             >
-              <StatusIcon size={10} color={statusColor} strokeWidth={3} />
+              <StatusIcon size={Sizes.iconTiny} color={statusColor} strokeWidth={Sizes.strokeThick} />
               <Text
                 style={{ color: statusColor }}
                 className="text-[8px] font-black uppercase tracking-wider ml-1"

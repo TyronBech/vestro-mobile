@@ -8,6 +8,7 @@ import { useAuthStore } from "../store/auth-store";
 import { useToastStore } from "../store/toast-store";
 import { apiLogin, apiLoginWith2fa } from "../services/api/endpoints/auth";
 import { Colors } from "../../constants/colors";
+import { Sizes } from "../../constants/sizes";
 import * as SecureStore from "expo-secure-store";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
 
@@ -236,7 +237,7 @@ export default function SessionLockScreen() {
   };
 
   return (
-    <View style={styles.overlay} className="absolute inset-0 z-50 bg-[#fdfefe] items-center justify-center px-6">
+    <View style={styles.overlay} className="absolute inset-0 z-50 bg-background items-center justify-center px-6">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : (keyboardVisible ? "padding" : undefined)}
         className="w-full max-w-sm items-center"
@@ -244,7 +245,7 @@ export default function SessionLockScreen() {
         <Animated.View style={[styles.card, cardAnimatedStyle]} className="w-full border border-borderLight rounded-2xl bg-white p-6 items-center">
           {/* Locked Header */}
           <View className="bg-backgroundDark rounded-2xl p-4 w-14 h-14 items-center justify-center mb-4">
-            <Lock size={28} color={Colors.background} strokeWidth={2.5} />
+            <Lock size={Sizes.iconLargeX} color={Colors.background} strokeWidth={2.5} />
           </View>
 
           <Text className="text-textPrimary font-black text-xl tracking-wider uppercase mb-1">
@@ -261,7 +262,7 @@ export default function SessionLockScreen() {
               disabled={loading}
               className="w-full flex-row items-center justify-center border border-borderLight rounded-2xl py-4 bg-backgroundLight mb-4"
             >
-              <Fingerprint size={20} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-2" />
+              <Fingerprint size={Sizes.iconMedium} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-2" />
               <Text className="text-textPrimary font-bold text-xs uppercase tracking-wider">
                 Scan Biometrics
               </Text>
@@ -287,15 +288,15 @@ export default function SessionLockScreen() {
                   />
                   <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-1">
                     {showPassword ? (
-                      <EyeOff size={16} color={Colors.textSecondary} strokeWidth={2.5} />
+                      <EyeOff size={Sizes.iconXSmall} color={Colors.textSecondary} strokeWidth={2.5} />
                     ) : (
-                      <Eye size={16} color={Colors.textSecondary} strokeWidth={2.5} />
+                      <Eye size={Sizes.iconXSmall} color={Colors.textSecondary} strokeWidth={2.5} />
                     )}
                   </TouchableOpacity>
                 </View>
                 {user?.biometricsEnabled && !hasBiometricKey && (
                   <View className="flex-row items-start mt-3 border border-gray-100 rounded-2xl p-3 bg-gray-50 w-full">
-                    <ShieldAlert size={14} color={Colors.textSecondary} strokeWidth={2.5} className="mr-2 mt-0.5" />
+                    <ShieldAlert size={Sizes.iconExtraSmall} color={Colors.textSecondary} strokeWidth={2.5} className="mr-2 mt-0.5" />
                     <Text className="text-textSecondary text-[10px] font-semibold flex-1 leading-normal">
                       Biometrics is enabled on your account, but this device is not linked. Unlock with your password to link this device.
                     </Text>
@@ -330,7 +331,7 @@ export default function SessionLockScreen() {
               <Text className="text-background font-bold text-xs uppercase tracking-wider mr-2">
                 {loading ? "Verifying..." : requires2fa ? "Verify & Unlock" : "Unlock App"}
               </Text>
-              {!loading && <ArrowRight size={14} color={Colors.background} strokeWidth={2.5} />}
+              {!loading && <ArrowRight size={Sizes.iconExtraSmall} color={Colors.background} strokeWidth={2.5} />}
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -338,9 +339,9 @@ export default function SessionLockScreen() {
         {/* Disconnect Option */}
         <TouchableOpacity
           onPress={handleLogout}
-          className="flex-row items-center mt-8 border border-borderLight rounded-2xl px-6 py-3 bg-[#fdfefe]"
+          className="flex-row items-center mt-8 border border-borderLight rounded-2xl px-6 py-3 bg-background"
         >
-          <LogOut size={16} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-2" />
+          <LogOut size={Sizes.iconXSmall} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-2" />
           <Text className="text-actionPrimary font-bold text-xs uppercase tracking-wider">
             Disconnect Session
           </Text>

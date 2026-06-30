@@ -15,6 +15,7 @@ import { useAuthStore } from "../../src/store/auth-store";
 import { fetchProfile } from "../../src/services/api/endpoints/profile";
 import { apiClient } from "../../src/services/api/client";
 import { Colors } from "../../constants/colors";
+import { Sizes } from "../../constants/sizes";
 import { CreditCard as CardIcon, Eye, EyeOff, Bell, Activity, ArrowDownLeft, ArrowUpRight, Plus } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { fetchMacroAssets, MacroAsset } from "../../src/services/api/endpoints/macro-assets";
@@ -223,8 +224,8 @@ export default function HomeTabScreen() {
           <Svg height="100%" width="100%" style={{ position: 'absolute' }}>
             <Defs>
               <LinearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor="#575757" stopOpacity="1" />
-                <Stop offset="1" stopColor="#141414" stopOpacity="1" />
+                <Stop offset="0" stopColor={Colors.darkStopStart} stopOpacity="1" />
+                <Stop offset="1" stopColor={Colors.darkStopEndHome} stopOpacity="1" />
               </LinearGradient>
             </Defs>
             <Rect x="0" y="0" width="100%" height="100%" fill="url(#cardGrad)" />
@@ -342,9 +343,9 @@ export default function HomeTabScreen() {
                     <View className="flex-row items-center flex-1 pr-4">
                       <View className={`w-10 h-10 rounded-xl items-center justify-center ${isInflow ? 'bg-emerald-50' : 'bg-red-50'}`}>
                         {isInflow ? (
-                          <ArrowDownLeft size={18} stroke="#10b981" strokeWidth={2.5} />
+                          <ArrowDownLeft size={Sizes.iconSmall} stroke={Colors.successAlt} strokeWidth={Sizes.strokeMedium} />
                         ) : (
-                          <ArrowUpRight size={18} stroke="#ee4e43" strokeWidth={2.5} />
+                          <ArrowUpRight size={Sizes.iconSmall} stroke={Colors.actionPrimary} strokeWidth={Sizes.strokeMedium} />
                         )}
                       </View>
                       <View className="ml-3 flex-1">

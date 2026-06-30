@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Defs, Rect, RadialGradient, Stop } from 'react-native-svg';
 import { Colors } from '../../constants/colors';
+import { Sizes } from '../../constants/sizes';
 import { CreditCard } from 'lucide-react-native';
 import { MacroAsset } from '../services/api/endpoints/macro-assets';
 import * as Haptics from 'expo-haptics';
@@ -50,7 +51,7 @@ function AssetIcon({ url }: { url: string | null }) {
   }, [url]);
 
   if (!url || error) {
-    return <CreditCard size={18} stroke={Colors.background} strokeWidth={2.5} />;
+    return <CreditCard size={Sizes.iconSmall} stroke={Colors.background} strokeWidth={Sizes.strokeMedium} />;
   }
 
   return (
@@ -212,9 +213,9 @@ function StackCard({
               fx="100%"
               fy="100%"
             >
-              <Stop offset="0%" stopColor={asset.colorCode || '#575757'} stopOpacity="1" />
-              <Stop offset="30%" stopColor={asset.colorCode || '#575757'} stopOpacity="0.85" />
-              <Stop offset="100%" stopColor="#1B1212" stopOpacity="1" />
+              <Stop offset="0%" stopColor={asset.colorCode || Colors.darkStopStart} stopOpacity="1" />
+              <Stop offset="30%" stopColor={asset.colorCode || Colors.darkStopStart} stopOpacity="0.85" />
+              <Stop offset="100%" stopColor={Colors.darkStopEnd} stopOpacity="1" />
             </RadialGradient>
           </Defs>
           <Rect x="0" y="0" width="100%" height="100%" fill={`url(#cardGrad-${asset.id})`} />
