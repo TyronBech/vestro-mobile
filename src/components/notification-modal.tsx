@@ -21,6 +21,7 @@ import {
 import { AppNotification } from "../types";
 import { useToastStore } from "../store/toast-store";
 import * as Haptics from "expo-haptics";
+import * as Notifications from "expo-notifications";
 
 export default function NotificationModal() {
   const { isNotificationModalOpen, closeNotificationModal } = useUIStore();
@@ -82,6 +83,36 @@ export default function NotificationModal() {
       const res = await testTriggerNotification(type);
       if (res.ok) {
         showToast(res.value.message || "Test triggered successfully!", "success");
+
+        // Schedule a local notification immediately to show a banner on the device
+        let title = "Vestro Notification";
+        let body = "Developer simulation triggered";
+
+        if (type === "CREDIT_DUE") {
+          title = "Credit Card Due Tomorrow [Simulated]";
+          body = 'Your card "Vestro Test Card" has an outstanding balance of ₱1,500.00 due tomorrow.';
+        } else if (type === "WANTS_SWEEP") {
+          title = "Wants Sweep Tomorrow [Simulated]";
+          body = "Your Wants Sweep executes tomorrow! You have ₱450.00 of unspent lifestyle cash in your Wants Sandbox ready to be swept.";
+        } else if (type === "CASH_FLOW") {
+          title = "Update Your Cash Flow [Simulated]";
+          body = "Did you spend cash or swipe today? Don't forget to log your cash flows in Vestro!";
+        } else {
+          title = "Vestro Push Test [Simulated]";
+          body = "This is an instant manual test push notification from your developer panel!";
+        }
+
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title,
+            body,
+            sound: true,
+          },
+          trigger: {
+            channelId: "default",
+          },
+        });
+
         // Reload notifications after a small delay to fetch the logged alert
         setTimeout(loadNotifications, 1000);
       }

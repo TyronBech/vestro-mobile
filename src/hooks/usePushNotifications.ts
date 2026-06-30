@@ -10,7 +10,6 @@ import { Colors } from '../../constants/colors';
 // Set notification presentation options for when the app is running in foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
     shouldShowBanner: true,
