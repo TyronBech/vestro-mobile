@@ -10,6 +10,8 @@ import * as ImagePicker from "expo-image-picker";
 import { useAuthStore } from "../../src/store/auth-store";
 import { useToastStore } from "../../src/store/toast-store";
 import { Colors } from "../../constants/colors";
+import { Sizes } from "../../constants/sizes";
+import { Strings } from "../../constants/string";
 import { apiUpdateProfile } from "../../src/services/api/endpoints/profile";
 import { apiEnableBiometrics, apiDisableBiometrics, apiGenerate2fa, apiEnable2fa, apiDisable2fa } from "../../src/services/api/endpoints/auth";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../../src/services/api/config";
@@ -128,12 +130,12 @@ export default function ProfileScreen() {
   // Submit profile changes
   const handleSaveProfile = async () => {
     if (!editName.trim()) {
-      toast.show("Name is required", "error");
+      toast.show(Strings.validationNameRequired, "error");
       triggerShake(editShakeOffset);
       return;
     }
     if (!editEmail.trim() || !editEmail.includes("@")) {
-      toast.show("Valid email is required", "error");
+      toast.show(Strings.validationEmailRequired, "error");
       triggerShake(editShakeOffset);
       return;
     }
@@ -298,7 +300,7 @@ export default function ProfileScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        toast.show("Permission to access media library is required.", "error");
+        toast.show(Strings.validationMediaPermissionRequired, "error");
         return;
       }
 
@@ -407,32 +409,32 @@ export default function ProfileScreen() {
             {/* Camera Overlay Icon */}
             <View className="absolute bottom-0 right-0 left-0 bg-black/55 py-1 items-center">
               {uploadingAvatar ? (
-                <ActivityIndicator size="small" color="#fdfefe" />
+                <ActivityIndicator size="small" color={Colors.background} />
               ) : (
-                <Camera size={10} color="#fdfefe" strokeWidth={2.5} />
+                <Camera size={Sizes.iconTiny} color={Colors.background} strokeWidth={2.5} />
               )}
             </View>
           </TouchableOpacity>
 
           <View className="flex-1 justify-center">
-            <Text className="text-[#fdfefe] text-xl font-black tracking-wide">
+            <Text className="text-background text-xl font-black tracking-wide">
               {user.name || "User"}
             </Text>
-            <Text className="text-[#fdfefe]/75 text-xs font-semibold mt-0.5">
+            <Text className="text-background/75 text-xs font-semibold mt-0.5">
               {user.email}
             </Text>
           </View>
           
           <TouchableOpacity
             onPress={openEditModal}
-            className="bg-[#fdfefe]/10 rounded-2xl p-3 items-center justify-center border border-[#fdfefe]/20 ml-2"
+            className="bg-background/10 rounded-2xl p-3 items-center justify-center border border-background/20 ml-2"
           >
-            <Edit3 size={16} color="#fdfefe" strokeWidth={2.5} />
+            <Edit3 size={Sizes.iconXSmall} color={Colors.background} strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
 
         {/* Profile Info Fields */}
-        <View className="border border-borderLight rounded-2xl p-5 bg-[#fdfefe] mb-6 space-y-4">
+        <View className="border border-borderLight rounded-2xl p-5 bg-background mb-6 space-y-4">
           <View className="flex-row items-center justify-between border-b border-borderLight pb-3 mb-3">
             <View className="flex-row items-center">
               <Mail size={16} color={Colors.textSecondary} strokeWidth={2.5} />
@@ -488,12 +490,12 @@ export default function ProfileScreen() {
         <Text className="text-textSecondary text-xs uppercase tracking-widest font-black mb-3 ml-1">
           Security Layers
         </Text>
-        <View className="border border-borderLight rounded-2xl p-5 bg-[#fdfefe] mb-6 space-y-4">
+        <View className="border border-borderLight rounded-2xl p-5 bg-background mb-6 space-y-4">
           {/* Biometrics Toggle */}
           <View className="flex-row items-center justify-between border-b border-borderLight pb-4 mb-4">
             <View className="flex-1 mr-4">
               <View className="flex-row items-center mb-1">
-                <Fingerprint size={16} color={Colors.textPrimary} strokeWidth={2.5} />
+                <Fingerprint size={Sizes.iconXSmall} color={Colors.textPrimary} strokeWidth={2.5} />
                 <Text className="text-textPrimary text-xs uppercase tracking-wider font-black ml-2">
                   Biometric Login
                 </Text>
@@ -506,7 +508,7 @@ export default function ProfileScreen() {
               value={!!user?.biometricsEnabled && hasLocalBiometricKey}
               onValueChange={handleBiometricToggle}
               trackColor={{ false: Colors.border, true: Colors.backgroundDark }}
-              thumbColor={(user?.biometricsEnabled && hasLocalBiometricKey) ? Colors.actionPrimary : "#fdfefe"}
+              thumbColor={(user?.biometricsEnabled && hasLocalBiometricKey) ? Colors.actionPrimary : Colors.background}
             />
           </View>
 
@@ -514,7 +516,7 @@ export default function ProfileScreen() {
           <View className="flex-row items-center justify-between">
             <View className="flex-1 mr-4">
               <View className="flex-row items-center mb-1">
-                <Key size={16} color={Colors.textPrimary} strokeWidth={2.5} />
+                <Key size={Sizes.iconXSmall} color={Colors.textPrimary} strokeWidth={2.5} />
                 <Text className="text-textPrimary text-xs uppercase tracking-wider font-black ml-2">
                   Two-Factor Auth (2FA)
                 </Text>
@@ -527,7 +529,7 @@ export default function ProfileScreen() {
               value={user.is2FAEnabled}
               onValueChange={handle2faToggle}
               trackColor={{ false: Colors.border, true: Colors.backgroundDark }}
-              thumbColor={user.is2FAEnabled ? Colors.actionPrimary : "#fdfefe"}
+              thumbColor={user.is2FAEnabled ? Colors.actionPrimary : Colors.background}
             />
           </View>
         </View>
@@ -537,7 +539,7 @@ export default function ProfileScreen() {
           onPress={handleLogout}
           className="bg-actionPrimary rounded-2xl py-4 items-center mt-4 border border-actionPrimaryDark"
         >
-          <Text className="text-[#fdfefe] font-bold text-xs uppercase tracking-widest">
+          <Text className="text-background font-bold text-xs uppercase tracking-widest">
             Disconnect Session
           </Text>
         </TouchableOpacity>
@@ -555,7 +557,7 @@ export default function ProfileScreen() {
             behavior={Platform.OS === "ios" ? "padding" : (keyboardVisible ? "padding" : undefined)}
             className="w-full"
           >
-            <Animated.View style={[styles.modalContent, editAnimatedStyle]} className="bg-[#fdfefe] border-t border-borderLight rounded-t-3xl p-6 pb-12">
+            <Animated.View style={[styles.modalContent, editAnimatedStyle]} className="bg-background border-t border-borderLight rounded-t-3xl p-6 pb-12">
               <View className="flex-row items-center justify-between mb-6">
                 <Text className="text-textPrimary font-black text-lg tracking-wider uppercase">
                   Edit Profile
@@ -624,7 +626,7 @@ export default function ProfileScreen() {
                       value={editPanicMode}
                       onValueChange={setEditPanicMode}
                       trackColor={{ false: Colors.border, true: Colors.backgroundDark }}
-                      thumbColor={editPanicMode ? Colors.actionPrimary : "#fdfefe"}
+                      thumbColor={editPanicMode ? Colors.actionPrimary : Colors.background}
                     />
                   </View>
                 </View>
@@ -638,7 +640,7 @@ export default function ProfileScreen() {
                   <Text className="text-background font-bold text-xs uppercase tracking-wider mr-2">
                     {loadingEdit ? "Saving..." : "Save Configuration"}
                   </Text>
-                  {!loadingEdit && <Check size={14} color={Colors.background} strokeWidth={2.5} />}
+                  {!loadingEdit && <Check size={Sizes.iconExtraSmall} color={Colors.background} strokeWidth={2.5} />}
                 </TouchableOpacity>
               </ScrollView>
             </Animated.View>
@@ -658,16 +660,16 @@ export default function ProfileScreen() {
             behavior={Platform.OS === "ios" ? "padding" : (keyboardVisible ? "padding" : undefined)}
             className="w-full"
           >
-            <Animated.View style={[styles.modalContent, twoFactorAnimatedStyle]} className="bg-[#fdfefe] border-t border-borderLight rounded-t-3xl p-6 pb-12">
+            <Animated.View style={[styles.modalContent, twoFactorAnimatedStyle]} className="bg-background border-t border-borderLight rounded-t-3xl p-6 pb-12">
               <View className="flex-row items-center justify-between mb-6">
                 <View className="flex-row items-center">
-                  <ShieldIcon size={20} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-2" />
+                  <ShieldIcon size={Sizes.iconMedium} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-2" />
                   <Text className="text-textPrimary font-black text-lg tracking-wider uppercase">
                     Setup 2FA Shield
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => setIs2faModalOpen(false)} className="p-1">
-                  <X size={20} color={Colors.textPrimary} strokeWidth={2.5} />
+                  <X size={Sizes.iconMedium} color={Colors.textPrimary} strokeWidth={2.5} />
                 </TouchableOpacity>
               </View>
 

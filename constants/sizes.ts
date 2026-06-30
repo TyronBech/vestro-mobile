@@ -5,10 +5,16 @@
 
 export const Sizes = {
   // Icon sizes
+  iconTiny: 10,
+  iconSuperTiny: 12,
+  iconExtraSmall: 14,
   iconMini: 15,
+  iconXSmall: 16,
   iconSmall: 18,
   iconMedium: 20,
+  iconHeader: 22,
   iconLarge: 24,
+  iconLargeX: 28,
 
   // Icon stroke widths
   strokeThin: 2,

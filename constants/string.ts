@@ -45,4 +45,15 @@ export const Strings = {
   securityBiometricDesc: "Biometric credentials are encrypted and stored in the secure enclave, never on public servers.",
   securityPanicTitle: "Panic Mode (Shake-to-Lock)",
   securityPanicDesc: "A sudden physical shake of the mobile device immediately invalidates the active session and locks all entry.",
+
+  // Common Validations & Forms
+  validationAmountPositive: "Amount must be a positive number.",
+  validationCoreNetworkRequired: "Core Network selection is required.",
+  validationNameRequired: "Name is required.",
+  validationCardNameRequired: "Card Name is required.",
+  validationCreditLimitPositive: "Credit Limit must be a positive number.",
+  validationPaymentDueDay: "Payment Due Day must be between 1 and 31.",
+  validationEmailRequired: "Valid email is required.",
+  validationMediaPermissionRequired: "Permission to access media library is required.",
+  validationSalary: "Please enter a valid salary amount.",
 } as const;

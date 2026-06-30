@@ -343,7 +343,7 @@ export default function LoginScreen() {
                   left: 0, 
                   right: 0, 
                   bottom: 0, 
-                  backgroundColor: "#373737", 
+                  backgroundColor: Colors.backgroundDark, 
                   zIndex: 50, 
                   alignItems: "center", 
                   justifyContent: "center", 

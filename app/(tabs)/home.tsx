@@ -15,6 +15,7 @@ import { useAuthStore } from "../../src/store/auth-store";
 import { fetchProfile } from "../../src/services/api/endpoints/profile";
 import { apiClient } from "../../src/services/api/client";
 import { Colors } from "../../constants/colors";
+import { Sizes } from "../../constants/sizes";
 import { CreditCard as CardIcon, Eye, EyeOff, Bell, Activity, ArrowDownLeft, ArrowUpRight, Plus } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { fetchMacroAssets, MacroAsset } from "../../src/services/api/endpoints/macro-assets";
@@ -23,11 +24,12 @@ import { fetchCashFlows, CashFlow } from "../../src/services/api/endpoints/cash-
 import { useUIStore } from "../../src/store/ui-store";
 import { fetchCreditCards, CreditCard } from "../../src/services/api/endpoints/credit-cards";
 import { CreditCardStack } from "../../src/components/CreditCardStack";
+import { fetchNotifications } from "../../src/services/api/endpoints/notification";
 
 
 
 export default function HomeTabScreen() {
-  const { user, refreshProfile, isSessionLocked } = useAuthStore();
+  const { user, refreshProfile, isSessionLocked, isAuthenticated } = useAuthStore();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [connectionStatus, setConnectionStatus] = useState<
@@ -38,9 +40,31 @@ export default function HomeTabScreen() {
   const [cashFlows, setCashFlows] = useState<CashFlow[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const networkUpdateTrigger = useUIStore((state) => state.networkUpdateTrigger);
   const budgetUpdateTrigger = useUIStore((state) => state.budgetUpdateTrigger);
+  const openNotificationModal = useUIStore((state) => state.openNotificationModal);
+  const isNotificationModalOpen = useUIStore((state) => state.isNotificationModalOpen);
+
+  const loadUnreadCount = useCallback(async () => {
+    if (!useAuthStore.getState().isAuthenticated) return;
+    try {
+      const res = await fetchNotifications();
+      if (res.ok) {
+        const count = res.value.filter((n) => !n.isRead).length;
+        setUnreadCount(count);
+      }
+    } catch (err) {
+      console.error("Failed to load notification count:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isNotificationModalOpen && isAuthenticated) {
+      loadUnreadCount();
+    }
+  }, [isNotificationModalOpen, isAuthenticated, loadUnreadCount]);
 
   // Calculate net worth dynamically by summing up live macro asset balances
   const balanceCents = macroAssets.reduce((sum, asset) => sum + asset.balance, 0); 
@@ -52,6 +76,7 @@ export default function HomeTabScreen() {
     try {
       if (useAuthStore.getState().isAuthenticated) {
         await refreshProfile();
+        await loadUnreadCount();
         const assetsRes = await fetchMacroAssets();
         if (assetsRes.ok) {
           setMacroAssets(assetsRes.value);
@@ -75,7 +100,7 @@ export default function HomeTabScreen() {
         setConnectionStatus("disconnected");
       }
     }
-  }, [refreshProfile]);
+  }, [refreshProfile, loadUnreadCount]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -85,6 +110,7 @@ export default function HomeTabScreen() {
     try {
       if (useAuthStore.getState().isAuthenticated) {
         await refreshProfile();
+        await loadUnreadCount();
         const assetsRes = await fetchMacroAssets();
         if (assetsRes.ok) {
           setMacroAssets(assetsRes.value);
@@ -109,7 +135,7 @@ export default function HomeTabScreen() {
     } finally {
       setRefreshing(false);
     }
-  }, [refreshProfile]);
+  }, [refreshProfile, loadUnreadCount]);
 
   useEffect(() => {
     if (!isSessionLocked) {
@@ -170,10 +196,25 @@ export default function HomeTabScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-            className="w-10 h-10 rounded-full border border-borderLight bg-background items-center justify-center"
+            onPress={async () => {
+              try {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              } catch (e) {}
+              openNotificationModal();
+            }}
+            className="w-10 h-10 rounded-full border border-borderLight bg-background items-center justify-center relative"
           >
             <Bell size={20} color={Colors.textPrimary} />
+            {unreadCount > 0 && (
+              <View 
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full items-center justify-center px-1 border border-background"
+                style={{ backgroundColor: Colors.actionPrimary }}
+              >
+                <Text className="text-[10px] font-black text-white text-center">
+                  {unreadCount}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -183,8 +224,8 @@ export default function HomeTabScreen() {
           <Svg height="100%" width="100%" style={{ position: 'absolute' }}>
             <Defs>
               <LinearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor="#575757" stopOpacity="1" />
-                <Stop offset="1" stopColor="#141414" stopOpacity="1" />
+                <Stop offset="0" stopColor={Colors.darkStopStart} stopOpacity="1" />
+                <Stop offset="1" stopColor={Colors.darkStopEndHome} stopOpacity="1" />
               </LinearGradient>
             </Defs>
             <Rect x="0" y="0" width="100%" height="100%" fill="url(#cardGrad)" />
@@ -302,9 +343,9 @@ export default function HomeTabScreen() {
                     <View className="flex-row items-center flex-1 pr-4">
                       <View className={`w-10 h-10 rounded-xl items-center justify-center ${isInflow ? 'bg-emerald-50' : 'bg-red-50'}`}>
                         {isInflow ? (
-                          <ArrowDownLeft size={18} stroke="#10b981" strokeWidth={2.5} />
+                          <ArrowDownLeft size={Sizes.iconSmall} stroke={Colors.successAlt} strokeWidth={Sizes.strokeMedium} />
                         ) : (
-                          <ArrowUpRight size={18} stroke="#ee4e43" strokeWidth={2.5} />
+                          <ArrowUpRight size={Sizes.iconSmall} stroke={Colors.actionPrimary} strokeWidth={Sizes.strokeMedium} />
                         )}
                       </View>
                       <View className="ml-3 flex-1">

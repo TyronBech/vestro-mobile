@@ -28,6 +28,10 @@ interface UIState {
   openCreditCardModal: (card?: CreditCard | null) => void;
   closeCreditCardModal: () => void;
   
+  isNotificationModalOpen: boolean;
+  openNotificationModal: () => void;
+  closeNotificationModal: () => void;
+
   // Counter to trigger data refreshes across screens when budget config updates
   budgetUpdateTrigger: number;
   triggerBudgetUpdate: () => void;
@@ -63,6 +67,10 @@ export const useUIStore = create<UIState>((set) => ({
   editingCreditCard: null,
   openCreditCardModal: (card = null) => set({ isCreditCardModalOpen: true, editingCreditCard: card }),
   closeCreditCardModal: () => set({ isCreditCardModalOpen: false, editingCreditCard: null }),
+
+  isNotificationModalOpen: false,
+  openNotificationModal: () => set({ isNotificationModalOpen: true }),
+  closeNotificationModal: () => set({ isNotificationModalOpen: false }),
   
   budgetUpdateTrigger: 0,
   triggerBudgetUpdate: () => set((state) => ({ budgetUpdateTrigger: state.budgetUpdateTrigger + 1 })),

@@ -20,6 +20,7 @@ import {
 } from "lucide-react-native";
 
 import { Colors } from "../../constants/colors";
+import { Strings } from "../../constants/string";
 import { fetchAnalyticsData, updateBudgetSalary } from "../../src/services/api/endpoints/analytics";
 import { AnalyticsData } from "../../src/types";
 import { useUIStore } from "../../src/store/ui-store";
@@ -104,7 +105,7 @@ export default function AnalyticsScreen() {
     const salaryPesos = parseFloat(inputSalary);
     if (isNaN(salaryPesos) || salaryPesos <= 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
-      toastStore.show("Please enter a valid salary amount.", "error");
+      toastStore.show(Strings.validationSalary, "error");
       return;
     }
 
@@ -338,10 +339,10 @@ export default function AnalyticsScreen() {
               curved
               curvature={0.06}
               areaChart
-              color="#0091FF"
+              color={Colors.analyticsLine}
               thickness={2.5}
-              startFillColor="#0091FF"
-              endFillColor="#0091FF"
+              startFillColor={Colors.analyticsLine}
+              endFillColor={Colors.analyticsLine}
               startOpacity={0.25}
               endOpacity={0.01}
               rulesType="dashed"
@@ -352,16 +353,16 @@ export default function AnalyticsScreen() {
               yAxisLabelWidth={38}
               yAxisTextStyle={{ color: Colors.textSecondary, fontSize: 8, fontWeight: "bold" }}
               xAxisLabelTextStyle={{ color: Colors.textSecondary, fontSize: 8, fontWeight: "black" }}
-              dataPointsColor="#0091FF"
+              dataPointsColor={Colors.analyticsLine}
               dataPointsRadius={4}
               formatYLabel={formatShortCurrency}
               // Interactive Pointer/Tooltip Configuration
               pointerConfig={{
                 pointerStripUptoDataPoint: true,
-                pointerStripColor: "#0091FF",
+                pointerStripColor: Colors.analyticsLine,
                 pointerStripWidth: 1.5,
                 strokeDashArray: [2, 5],
-                pointerColor: "#0091FF",
+                pointerColor: Colors.analyticsLine,
                 radius: 5,
                 pointerLabelWidth: 85,
                 pointerLabelHeight: 35,
@@ -372,10 +373,10 @@ export default function AnalyticsScreen() {
                       style={{
                         paddingHorizontal: 8,
                         paddingVertical: 4,
-                        backgroundColor: "#ffffff",
+                        backgroundColor: Colors.white,
                         borderRadius: 8,
                         borderWidth: 1,
-                        borderColor: "#e0e0e0",
+                        borderColor: Colors.border,
                         alignItems: "center",
                         justifyContent: "center",
                         marginTop: -25,
@@ -506,10 +507,10 @@ export default function AnalyticsScreen() {
                         style={{
                           paddingHorizontal: 8,
                           paddingVertical: 4,
-                          backgroundColor: "#ffffff",
+                          backgroundColor: Colors.white,
                           borderRadius: 8,
                           borderWidth: 1,
-                          borderColor: "#e0e0e0",
+                          borderColor: Colors.border,
                           alignItems: "center",
                           justifyContent: "center",
                           marginTop: -25,

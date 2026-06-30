@@ -21,6 +21,8 @@ import { useToastStore } from "../store/toast-store";
 import { createCashFlow } from "../services/api/endpoints/cash-flows";
 import { fetchCoreNetworks, CoreNetwork } from "../services/api/endpoints/core-networks";
 import { Colors } from "../../constants/colors";
+import { Sizes } from "../../constants/sizes";
+import { Strings } from "../../constants/string";
 
 export default function CashFlowModal() {
   const {
@@ -98,13 +100,13 @@ export default function CashFlowModal() {
     const amt = parseFloat(amountPesos);
     if (isNaN(amt) || amt <= 0) {
       triggerErrorEffects();
-      toastStore.show("Amount must be a positive number.", "error");
+      toastStore.show(Strings.validationAmountPositive, "error");
       return;
     }
 
     if (!selectedCoreNetworkId) {
       triggerErrorEffects();
-      toastStore.show("Core Network selection is required.", "error");
+      toastStore.show(Strings.validationCoreNetworkRequired, "error");
       return;
     }
 
@@ -199,14 +201,14 @@ export default function CashFlowModal() {
                     }`}
                   >
                     <ArrowDownLeft
-                      size={14}
-                      color={type === "INFLOW" ? Colors.background : "#10b981"}
+                      size={Sizes.iconExtraSmall}
+                      color={type === "INFLOW" ? Colors.background : Colors.successAlt}
                       style={{ marginRight: 6 }}
                       strokeWidth={3}
                     />
                     <Text
                       className="text-xs font-black uppercase tracking-wider"
-                      style={{ color: type === "INFLOW" ? Colors.background : "#10b981" }}
+                      style={{ color: type === "INFLOW" ? Colors.background : Colors.successAlt }}
                     >
                       Inflow
                     </Text>

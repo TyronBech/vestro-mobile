@@ -21,6 +21,7 @@ import { useToastStore } from "../store/toast-store";
 import { recordManualSweep } from "../services/api/endpoints/sweep";
 import { fetchCoreNetworks, CoreNetwork } from "../services/api/endpoints/core-networks";
 import { Colors } from "../../constants/colors";
+import { Strings } from "../../constants/string";
 
 export default function SweepModal() {
   const {
@@ -115,13 +116,13 @@ export default function SweepModal() {
     const amt = parseFloat(amountPesos);
     if (isNaN(amt) || amt <= 0) {
       triggerErrorEffects();
-      toastStore.show("Amount must be a positive number.", "error");
+      toastStore.show(Strings.validationAmountPositive, "error");
       return;
     }
 
     if (!selectedCoreNetworkId) {
       triggerErrorEffects();
-      toastStore.show("Core Network selection is required.", "error");
+      toastStore.show(Strings.validationCoreNetworkRequired, "error");
       return;
     }
 
