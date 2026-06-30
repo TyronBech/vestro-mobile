@@ -33,6 +33,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.vestro",
+      "googleServicesFile": "./google-services.json",
       "navigationBar": {
         "barStyle": "dark-content",
         "backgroundColor": "#fdfefe"
@@ -40,6 +41,13 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7ed130af-0b1a-409f-b1e1-502d80c23f3e"
+      }
+    },
+    "owner": "tyronbech"
   }
 }

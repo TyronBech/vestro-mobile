@@ -97,12 +97,28 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
     return null;
   }
 
+  // EAS Project ID is required by Expo push notification client in modern SDKs
+  const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+  if (!projectId) {
+    console.warn(
+      '[Push] Expo Push Token setup skipped: No EAS projectId found. ' +
+      'Please register your project with EAS or configure a projectId in app.json under extra.eas.projectId.'
+    );
+    return null;
+  }
+
   try {
-    // EAS Project ID is required by Expo push notification client in modern SDKs
-    const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
     token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-  } catch (error) {
-    console.error('[Push] Error getting Expo Push Token:', error);
+  } catch (error: any) {
+    const errorMsg = error?.message || '';
+    if (errorMsg.includes('FirebaseApp') || errorMsg.includes('fcm-credentials')) {
+      console.warn(
+        '[Push] Expo Push Token setup skipped: Firebase/FCM is not configured for this build. ' +
+        'If you need push notifications, please configure Firebase and provide google-services.json.'
+      );
+    } else {
+      console.warn('[Push] Error getting Expo Push Token:', error);
+    }
   }
 
   if (Platform.OS === 'android') {
