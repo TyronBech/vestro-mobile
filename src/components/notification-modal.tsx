@@ -128,7 +128,7 @@ export default function NotificationModal() {
     <FlatModal
       visible={isNotificationModalOpen}
       onClose={closeNotificationModal}
-      title="Alert Center"
+      title="Notifications"
       headerIcon={<Bell size={Sizes.iconHeader} color={Colors.textPrimary} />}
     >
       <View style={{ maxHeight: 450 }} className="w-full">
