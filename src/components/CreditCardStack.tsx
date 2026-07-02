@@ -367,8 +367,17 @@ export function CreditCardStack({ cards, showBalance }: Props) {
 
   const panGesture = useMemo(() => {
     const cardCount = cards.length;
+    const cardWidth = SCREEN_WIDTH - 48;
+    const hitSlopX = -Math.round((cardWidth - 120) / 2);
+    const hitSlopY = -Math.round((210 - 120) / 2);
 
     return Gesture.Pan()
+      .hitSlop({
+        left: hitSlopX,
+        right: hitSlopX,
+        top: hitSlopY,
+        bottom: hitSlopY,
+      })
       .onStart(() => {
         dragDirection.value = 0;
       })
