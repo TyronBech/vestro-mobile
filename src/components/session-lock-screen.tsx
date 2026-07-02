@@ -27,6 +27,13 @@ export default function SessionLockScreen() {
   const [loading, setLoading] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [hasBiometricKey, setHasBiometricKey] = useState(false);
+  const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState<number>(0);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
@@ -41,6 +48,55 @@ export default function SessionLockScreen() {
       hideSubscription.remove();
     };
   }, []);
+
+  // Load initial rate limit from SecureStore on mount
+  useEffect(() => {
+    const checkRateLimit = async () => {
+      try {
+        const storedExpiresAt = await SecureStore.getItemAsync(
+          SECURE_STORE_KEYS.RATE_LIMIT_EXPIRES_AT,
+          SECURE_STORE_OPTIONS
+        );
+        if (storedExpiresAt) {
+          const expiresAt = parseInt(storedExpiresAt, 10);
+          const now = Date.now();
+          if (expiresAt > now) {
+            const timeLeft = Math.ceil((expiresAt - now) / 1000);
+            setRateLimitTimeLeft(timeLeft);
+          } else {
+            await SecureStore.deleteItemAsync(
+              SECURE_STORE_KEYS.RATE_LIMIT_EXPIRES_AT,
+              SECURE_STORE_OPTIONS
+            );
+          }
+        }
+      } catch (e) {
+        console.error("Error loading rate limit in SessionLockScreen:", e);
+      }
+    };
+    checkRateLimit();
+  }, []);
+
+  // Countdown timer effect for rate limiting
+  useEffect(() => {
+    if (rateLimitTimeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setRateLimitTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          SecureStore.deleteItemAsync(
+            SECURE_STORE_KEYS.RATE_LIMIT_EXPIRES_AT,
+            SECURE_STORE_OPTIONS
+          ).catch((e) => console.error("Error deleting rate limit from store:", e));
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [rateLimitTimeLeft]);
 
   // Card shake animation
   const shakeOffset = useSharedValue(0);
@@ -91,6 +147,7 @@ export default function SessionLockScreen() {
   }, [user]);
 
   const handleBiometricScan = async () => {
+    if (rateLimitTimeLeft > 0) return;
     if (!user?.biometricsEnabled || !isBiometricSupported || !isBiometricEnrolled || !hasBiometricKey) {
       return;
     }
@@ -112,8 +169,18 @@ export default function SessionLockScreen() {
           toast.show("Welcome back!", "success");
         } catch (err: any) {
           console.error("Biometric unlock store error:", err);
-          toast.show(err.message || "Invalid biometric key", "error");
-          triggerErrorEffects();
+          if (err.status === 429) {
+            const expiresAt = Date.now() + 15 * 60 * 1000;
+            await SecureStore.setItemAsync(
+              SECURE_STORE_KEYS.RATE_LIMIT_EXPIRES_AT,
+              expiresAt.toString(),
+              SECURE_STORE_OPTIONS
+            ).catch((e) => console.error("Error storing rate limit:", e));
+            setRateLimitTimeLeft(900);
+          } else {
+            toast.show(err.message || "Invalid biometric key", "error");
+            triggerErrorEffects();
+          }
         } finally {
           setLoading(false);
         }
@@ -131,6 +198,7 @@ export default function SessionLockScreen() {
   };
 
   const handlePasswordUnlock = async () => {
+    if (rateLimitTimeLeft > 0) return;
     if (!user?.email) return;
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -149,6 +217,7 @@ export default function SessionLockScreen() {
           toast.show("2FA code must be 6 digits", "error");
           triggerErrorEffects();
           setLoading(false);
+          isSubmittingRef.current = false;
           return;
         }
 
@@ -223,8 +292,18 @@ export default function SessionLockScreen() {
       }
     } catch (err: any) {
       console.error("Unlock failed:", err);
-      toast.show(err.message || "Invalid credentials", "error");
-      triggerErrorEffects();
+      if (err.status === 429) {
+        const expiresAt = Date.now() + 15 * 60 * 1000;
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.RATE_LIMIT_EXPIRES_AT,
+          expiresAt.toString(),
+          SECURE_STORE_OPTIONS
+        ).catch((e) => console.error("Error storing rate limit:", e));
+        setRateLimitTimeLeft(900);
+      } else {
+        toast.show(err.message || "Invalid credentials", "error");
+        triggerErrorEffects();
+      }
     } finally {
       setLoading(false);
       isSubmittingRef.current = false;
@@ -249,6 +328,34 @@ export default function SessionLockScreen() {
         className="w-full max-w-sm items-center"
       >
         <Animated.View style={[styles.card, cardAnimatedStyle]} className="w-full border border-borderLight rounded-2xl bg-white p-6 items-center">
+          {rateLimitTimeLeft > 0 && (
+            <View 
+              style={{ 
+                position: "absolute", 
+                top: 0, 
+                left: 0, 
+                right: 0, 
+                bottom: 0, 
+                backgroundColor: Colors.backgroundDark, 
+                zIndex: 50, 
+                alignItems: "center", 
+                justifyContent: "center", 
+                padding: 24,
+                borderRadius: 16,
+              }}
+            >
+              <Lock size={32} stroke={Colors.actionPrimary} strokeWidth={2.5} className="mb-4" />
+              <Text className="text-actionPrimary text-xs font-bold uppercase tracking-widest mt-3 mb-5">
+                ACCESS LOCKOUT
+              </Text>
+              <Text className="text-background font-black text-4xl tracking-widest mb-3">
+                {formatTime(rateLimitTimeLeft)}
+              </Text>
+              <Text className="text-background/60 text-[10px] uppercase font-bold tracking-wider text-center leading-relaxed">
+                Too many unlock attempts. Please wait before trying again.
+              </Text>
+            </View>
+          )}
           {/* Locked Header */}
           <View className="bg-backgroundDark rounded-2xl p-4 w-14 h-14 items-center justify-center mb-4">
             <Lock size={Sizes.iconLargeX} color={Colors.background} strokeWidth={2.5} />

@@ -24,8 +24,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import Svg, { Path } from "react-native-svg";
+import * as SecureStore from "expo-secure-store";
 import { useAuthStore } from "../src/store/auth-store";
-import { APP_NAME } from "../src/services/api/config";
+import { APP_NAME, SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../src/services/api/config";
 import { supabase } from "../src/services/supabase";
 import Card from "../src/components/card";
 import { Colors } from "../constants/colors";
@@ -75,6 +76,34 @@ export default function LoginScreen() {
   // Reanimated shared value for card shake
   const shakeOffset = useSharedValue(0);
 
+  // Load initial rate limit from SecureStore on mount
+  useEffect(() => {
+    const checkRateLimit = async () => {
+      try {
+        const storedExpiresAt = await SecureStore.getItemAsync(
+          SECURE_STORE_KEYS.RATE_LIMIT_EXPIRES_AT,
+          SECURE_STORE_OPTIONS
+        );
+        if (storedExpiresAt) {
+          const expiresAt = parseInt(storedExpiresAt, 10);
+          const now = Date.now();
+          if (expiresAt > now) {
+            const timeLeft = Math.ceil((expiresAt - now) / 1000);
+            setRateLimitTimeLeft(timeLeft);
+          } else {
+            await SecureStore.deleteItemAsync(
+              SECURE_STORE_KEYS.RATE_LIMIT_EXPIRES_AT,
+              SECURE_STORE_OPTIONS
+            );
+          }
+        }
+      } catch (e) {
+        console.error("Error loading rate limit from SecureStore:", e);
+      }
+    };
+    checkRateLimit();
+  }, []);
+
   // Countdown timer effect for rate limiting
   useEffect(() => {
     if (rateLimitTimeLeft <= 0) return;
@@ -83,6 +112,10 @@ export default function LoginScreen() {
       setRateLimitTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
+          SecureStore.deleteItemAsync(
+            SECURE_STORE_KEYS.RATE_LIMIT_EXPIRES_AT,
+            SECURE_STORE_OPTIONS
+          ).catch((e) => console.error("Error deleting rate limit from store:", e));
           return 0;
         }
         return prev - 1;
@@ -138,6 +171,7 @@ export default function LoginScreen() {
   }, [error, triggerErrorEffects]);
 
   const handleLogin = async () => {
+    if (rateLimitTimeLeft > 0) return;
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
     try {
@@ -184,6 +218,12 @@ export default function LoginScreen() {
       }
     } catch (err: any) {
       if (err.status === 429) {
+        const expiresAt = Date.now() + 15 * 60 * 1000;
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.RATE_LIMIT_EXPIRES_AT,
+          expiresAt.toString(),
+          SECURE_STORE_OPTIONS
+        ).catch((e) => console.error("Error storing rate limit:", e));
         setRateLimitTimeLeft(900); // 15 minutes lockout
       } else {
         triggerErrorEffects();
@@ -194,6 +234,7 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = async () => {
+    if (rateLimitTimeLeft > 0) return;
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
     try {
@@ -259,6 +300,12 @@ export default function LoginScreen() {
     } catch (err: any) {
       console.error("Google OAuth error:", err);
       if (err.status === 429) {
+        const expiresAt = Date.now() + 15 * 60 * 1000;
+        await SecureStore.setItemAsync(
+          SECURE_STORE_KEYS.RATE_LIMIT_EXPIRES_AT,
+          expiresAt.toString(),
+          SECURE_STORE_OPTIONS
+        ).catch((e) => console.error("Error storing rate limit:", e));
         setRateLimitTimeLeft(900); // 15 minutes lockout
       } else {
         useAuthStore.setState({ error: err.message || Strings.googleLoginError });
