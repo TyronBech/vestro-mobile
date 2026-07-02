@@ -148,11 +148,11 @@ export default function CustomTabBar({
     useUIStore.getState().openCreditCardModal(null);
   };
 
-  // Animated styles for the fanned-out bubble menu (Pascal's triangle layout)
-  // Bubble 1 (Left): Budget Config (-75, -75)
+  // Animated styles for the fanned-out bubble menu (Arc layout)
+  // Bubble 1 (Budget Config): (-131, -61)
   const bubble1Style = useAnimatedStyle(() => {
-    const x = -75 * animationProgress.value;
-    const y = -75 * animationProgress.value;
+    const x = -131 * animationProgress.value;
+    const y = -61 * animationProgress.value;
     return {
       transform: [
         { translateX: x },
@@ -163,10 +163,10 @@ export default function CustomTabBar({
     };
   });
 
-  // Bubble 2 (Center): Macro Asset (0, -105)
+  // Bubble 2 (Macro Asset): (-33, -141)
   const bubble2Style = useAnimatedStyle(() => {
-    const x = 0 * animationProgress.value;
-    const y = -105 * animationProgress.value;
+    const x = -33 * animationProgress.value;
+    const y = -141 * animationProgress.value;
     return {
       transform: [
         { translateX: x },
@@ -177,10 +177,10 @@ export default function CustomTabBar({
     };
   });
 
-  // Bubble 3 (Right): Network (75, -75)
+  // Bubble 3 (Network): (33, -141)
   const bubble3Style = useAnimatedStyle(() => {
-    const x = 75 * animationProgress.value;
-    const y = -75 * animationProgress.value;
+    const x = 33 * animationProgress.value;
+    const y = -141 * animationProgress.value;
     return {
       transform: [
         { translateX: x },
@@ -191,10 +191,10 @@ export default function CustomTabBar({
     };
   });
 
-  // Bubble 4 (Sweep - on top, between Config and Macro Asset): (-58.5, -152)
+  // Bubble 4 (Sweep): (-91, -113)
   const bubble4Style = useAnimatedStyle(() => {
-    const x = -58.5 * animationProgress.value;
-    const y = -152 * animationProgress.value;
+    const x = -91 * animationProgress.value;
+    const y = -113 * animationProgress.value;
     return {
       transform: [
         { translateX: x },
@@ -205,10 +205,10 @@ export default function CustomTabBar({
     };
   });
 
-  // Bubble 5 (Cash Flow - on top, between Macro Asset and Network): (58.5, -152)
+  // Bubble 5 (Log Activity): (91, -113)
   const bubble5Style = useAnimatedStyle(() => {
-    const x = 58.5 * animationProgress.value;
-    const y = -152 * animationProgress.value;
+    const x = 91 * animationProgress.value;
+    const y = -113 * animationProgress.value;
     return {
       transform: [
         { translateX: x },
@@ -219,10 +219,10 @@ export default function CustomTabBar({
     };
   });
 
-  // Bubble 6 (Credit Card - centered on top above Macro Asset): (0, -195)
+  // Bubble 6 (Credit Card): (131, -61)
   const bubble6Style = useAnimatedStyle(() => {
-    const x = 0 * animationProgress.value;
-    const y = -195 * animationProgress.value;
+    const x = 131 * animationProgress.value;
+    const y = -61 * animationProgress.value;
     return {
       transform: [
         { translateX: x },
@@ -288,7 +288,7 @@ export default function CustomTabBar({
             style={styles.bubbleText}
             className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
           >
-            Budget Config
+            Budget
           </Text>
         </Animated.View>
 
@@ -300,7 +300,7 @@ export default function CustomTabBar({
           <TouchableOpacity
             onPress={handleMacroAssetPress}
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
-            style={{ backgroundColor: Colors.actionPrimary }}
+            style={{ backgroundColor: Colors.backgroundDark }}
           >
             <ArrowUpRight
               size={20}
@@ -312,7 +312,7 @@ export default function CustomTabBar({
             style={styles.bubbleText}
             className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
           >
-            Macro Asset
+            Asset
           </Text>
         </Animated.View>
 
@@ -324,7 +324,7 @@ export default function CustomTabBar({
           <TouchableOpacity
             onPress={handleCoreNetworkPress}
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
-            style={{ backgroundColor: Colors.backgroundDark }}
+            style={{ backgroundColor: Colors.actionPrimary }}
           >
             <ChartNetwork
               size={20}
@@ -368,7 +368,7 @@ export default function CustomTabBar({
           <TouchableOpacity
             onPress={handleCashFlowPress}
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
-            style={{ backgroundColor: Colors.actionPrimary }}
+            style={{ backgroundColor: Colors.backgroundDark }}
           >
             <DollarSign
               size={20}
@@ -380,7 +380,7 @@ export default function CustomTabBar({
             style={styles.bubbleText}
             className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
           >
-            Log Activity
+            Log Flow
           </Text>
         </Animated.View>
 
@@ -392,7 +392,7 @@ export default function CustomTabBar({
           <TouchableOpacity
             onPress={handleCreditCardPress}
             className="w-12 h-12 rounded-full items-center justify-center border border-border"
-            style={{ backgroundColor: Colors.backgroundDark }}
+            style={{ backgroundColor: Colors.actionPrimary }}
           >
             <CreditCardIcon
               size={20}
@@ -404,7 +404,7 @@ export default function CustomTabBar({
             style={styles.bubbleText}
             className="font-black text-[9px] uppercase tracking-wider mt-1 text-center"
           >
-            Credit Card
+            Credit
           </Text>
         </Animated.View>
       </View>

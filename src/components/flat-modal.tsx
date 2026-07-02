@@ -69,7 +69,7 @@ export default function FlatModal({
             <View className="flex-row justify-between items-center mb-6">
               <View className="flex-row items-center flex-1 mr-2">
                 {headerIcon && <View style={{ marginRight: 8 }}>{headerIcon}</View>}
-                <Text className="text-lg font-black text-textPrimary uppercase tracking-wider flex-shrink" numberOfLines={1}>
+                <Text className="text-base font-black text-textPrimary uppercase tracking-wider flex-shrink" numberOfLines={1}>
                   {title}
                 </Text>
               </View>
