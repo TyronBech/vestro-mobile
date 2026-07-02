@@ -11,11 +11,12 @@ export interface ManualSweepParams {
 /**
  * Record a manual sweep log entry.
  */
-export async function recordManualSweep(params: ManualSweepParams): Promise<Result<any, string>> {
+export async function recordManualSweep(params: ManualSweepParams, idempotencyKey?: string): Promise<Result<any, string>> {
   try {
     const response = await apiClient<{ data: any }>('/sweep/manual', {
       method: 'POST',
       body: JSON.stringify(params),
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(response.data);
   } catch (error: any) {

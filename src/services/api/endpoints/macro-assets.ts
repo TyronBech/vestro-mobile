@@ -14,12 +14,14 @@ export async function fetchMacroAssets(): Promise<Result<MacroAsset[], string>> 
 }
 
 export async function createMacroAsset(
-  params: CreateMacroAssetParams
+  params: CreateMacroAssetParams,
+  idempotencyKey?: string
 ): Promise<Result<MacroAsset, string>> {
   try {
     const response = await apiClient<{ data: MacroAsset }>('/macro-assets', {
       method: 'POST',
       body: JSON.stringify(params),
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(response.data);
   } catch (error: any) {

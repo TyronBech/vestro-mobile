@@ -37,7 +37,8 @@ export async function updateBudgetSalary(
   needsRate: number,
   wantsRate: number,
   savingsRate: number,
-  investmentsRate: number
+  investmentsRate: number,
+  idempotencyKey?: string
 ): Promise<Result<BudgetConfig, string>> {
   try {
     const response = await apiClient<{ data: BudgetConfig }>('/budget', {
@@ -50,6 +51,7 @@ export async function updateBudgetSalary(
         investmentsRate,
         cashAmount: 0, // default/placeholder cash amount
       }),
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(response.data);
   } catch (error: any) {

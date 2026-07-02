@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -23,8 +23,11 @@ import { fetchCoreNetworks, CoreNetwork } from "../services/api/endpoints/core-n
 import { Colors } from "../../constants/colors";
 import { Sizes } from "../../constants/sizes";
 import { Strings } from "../../constants/string";
+import { generateUUID } from "../utils/uuid";
 
 export default function CashFlowModal() {
+  const isSubmittingRef = useRef(false);
+  const idempotencyKeyRef = useRef(generateUUID());
   const {
     isCashFlowModalOpen,
     closeCashFlowModal,
@@ -68,6 +71,7 @@ export default function CashFlowModal() {
 
   useEffect(() => {
     if (isCashFlowModalOpen) {
+      idempotencyKeyRef.current = generateUUID();
       loadCoreNetworks();
     }
   }, [isCashFlowModalOpen, networkUpdateTrigger]);
@@ -96,17 +100,24 @@ export default function CashFlowModal() {
   };
 
   const handleSave = async () => {
-    if (saving) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving) {
+      isSubmittingRef.current = false;
+      return;
+    }
     const amt = parseFloat(amountPesos);
     if (isNaN(amt) || amt <= 0) {
       triggerErrorEffects();
       toastStore.show(Strings.validationAmountPositive, "error");
+      isSubmittingRef.current = false;
       return;
     }
 
     if (!selectedCoreNetworkId) {
       triggerErrorEffects();
       toastStore.show(Strings.validationCoreNetworkRequired, "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -118,7 +129,7 @@ export default function CashFlowModal() {
       coreNetworkId: selectedCoreNetworkId,
       type,
       notes: notes.trim() || undefined,
-    });
+    }, idempotencyKeyRef.current);
 
     if (res.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -135,6 +146,7 @@ export default function CashFlowModal() {
       toastStore.show("Failed to log activity: " + res.error, "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   const handleClose = () => {

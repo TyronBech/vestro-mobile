@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -62,6 +62,8 @@ export default function LoginScreen() {
   const router = useRouter();
   const { login, loginWithGoogle, loginWith2fa, loading, error, clearError } = useAuthStore();
   const insets = useSafeAreaInsets();
+
+  const isSubmittingRef = useRef(false);
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -136,6 +138,8 @@ export default function LoginScreen() {
   }, [error, triggerErrorEffects]);
 
   const handleLogin = async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } catch (e) {}
@@ -144,6 +148,7 @@ export default function LoginScreen() {
       if (twoFactorCode.length !== 6) {
         useAuthStore.setState({ error: "2FA code must be 6 digits" });
         triggerErrorEffects();
+        isSubmittingRef.current = false;
         return;
       }
       try {
@@ -153,6 +158,8 @@ export default function LoginScreen() {
         } catch (e) {}
       } catch (err: any) {
         triggerErrorEffects();
+      } finally {
+        isSubmittingRef.current = false;
       }
       return;
     }
@@ -160,6 +167,7 @@ export default function LoginScreen() {
     if (!email.trim() || !password.trim()) {
       useAuthStore.setState({ error: Strings.validationEmailPassword });
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -180,10 +188,14 @@ export default function LoginScreen() {
       } else {
         triggerErrorEffects();
       }
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
   const handleGoogleLogin = async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } catch (e) {}
@@ -252,6 +264,8 @@ export default function LoginScreen() {
         useAuthStore.setState({ error: err.message || Strings.googleLoginError });
         triggerErrorEffects();
       }
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 

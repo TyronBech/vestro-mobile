@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -14,10 +14,14 @@ import { useUIStore } from "../store/ui-store";
 import { useToastStore } from "../store/toast-store";
 import { getBudgetConfig, updateBudgetSalary } from "../services/api/endpoints/analytics";
 import { Colors } from "../../constants/colors";
+import { generateUUID } from "../utils/uuid";
 
 export default function BudgetConfigModal() {
   const { isBudgetModalOpen, closeBudgetModal, triggerBudgetUpdate } = useUIStore();
   const toastStore = useToastStore();
+
+  const isSubmittingRef = useRef(false);
+  const idempotencyKeyRef = useRef(generateUUID());
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -32,6 +36,7 @@ export default function BudgetConfigModal() {
 
   useEffect(() => {
     if (isBudgetModalOpen) {
+      idempotencyKeyRef.current = generateUUID();
       loadConfig();
     }
   }, [isBudgetModalOpen]);
@@ -61,11 +66,17 @@ export default function BudgetConfigModal() {
   const wantsExceeded = valWants > 30;
 
   const handleSave = async () => {
-    if (saving) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving) {
+      isSubmittingRef.current = false;
+      return;
+    }
     // 1. Validation for negative values
     if (valNeeds < 0 || valWants < 0 || valSavings < 0 || valInvestments < 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Allocation rates cannot be negative.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -73,6 +84,7 @@ export default function BudgetConfigModal() {
     if (!isTotalValid) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Total allocation must equal exactly 100%.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -84,7 +96,8 @@ export default function BudgetConfigModal() {
       valNeeds / 100,
       valWants / 100,
       valSavings / 100,
-      valInvestments / 100
+      valInvestments / 100,
+      idempotencyKeyRef.current
     );
 
     if (res.ok) {
@@ -97,6 +110,7 @@ export default function BudgetConfigModal() {
       toastStore.show("Failed to update config: " + res.error, "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   return (

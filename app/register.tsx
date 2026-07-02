@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -33,6 +33,8 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { signup, loading, error, clearError } = useAuthStore();
   const insets = useSafeAreaInsets();
+
+  const isSubmittingRef = useRef(false);
 
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -75,6 +77,8 @@ export default function RegisterScreen() {
   }, [error, triggerErrorEffects]);
 
   const handleRegister = async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } catch (e) {}
@@ -83,24 +87,28 @@ export default function RegisterScreen() {
     if (!name.trim()) {
       useAuthStore.setState({ error: Strings.validationNameRequired });
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
     if (!email.trim() || !email.includes("@")) {
       useAuthStore.setState({ error: Strings.validationEmailRequired });
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
     if (!password || password.length < 8) {
       useAuthStore.setState({ error: Strings.validationPasswordLength });
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
     if (password !== confirmPassword) {
       useAuthStore.setState({ error: Strings.validationPasswordsMatch });
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -116,6 +124,8 @@ export default function RegisterScreen() {
       } catch (e) {}
     } catch (err: any) {
       triggerErrorEffects();
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 

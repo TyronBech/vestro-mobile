@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet, Keyboard } from "react-native";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as Haptics from "expo-haptics";
@@ -15,6 +15,8 @@ import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config"
 export default function SessionLockScreen() {
   const { user, logout, biometricUnlock } = useAuthStore();
   const toast = useToastStore();
+
+  const isSubmittingRef = useRef(false);
 
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -130,10 +132,13 @@ export default function SessionLockScreen() {
 
   const handlePasswordUnlock = async () => {
     if (!user?.email) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
 
     if (!password.trim()) {
       toast.show("Password is required", "error");
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -222,6 +227,7 @@ export default function SessionLockScreen() {
       triggerErrorEffects();
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 

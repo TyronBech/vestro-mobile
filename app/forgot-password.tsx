@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -34,6 +34,8 @@ export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { forgotPassword, resetPassword, loading, error, clearError } = useAuthStore();
   const insets = useSafeAreaInsets();
+
+  const isSubmittingRef = useRef(false);
 
   const [phase, setPhase] = useState<1 | 2>(1);
   const [email, setEmail] = useState<string>("");
@@ -77,6 +79,8 @@ export default function ForgotPasswordScreen() {
   }, [error, triggerErrorEffects]);
 
   const handleRequestOtp = async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } catch (e) {}
@@ -84,6 +88,7 @@ export default function ForgotPasswordScreen() {
     if (!email.trim()) {
       useAuthStore.setState({ error: "Please enter your email address." });
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -108,10 +113,14 @@ export default function ForgotPasswordScreen() {
       );
     } catch (err) {
       // Error is caught in auth-store
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
   const handleResetPassword = async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } catch (e) {}
@@ -119,24 +128,28 @@ export default function ForgotPasswordScreen() {
     if (!otp.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       useAuthStore.setState({ error: "All fields are required." });
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
     if (otp.trim().length !== 6) {
       useAuthStore.setState({ error: "OTP code must be exactly 6 digits." });
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
     if (newPassword !== confirmPassword) {
       useAuthStore.setState({ error: "Passwords do not match." });
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
     if (newPassword.length < 8) {
       useAuthStore.setState({ error: "Password must be at least 8 characters." });
       triggerErrorEffects();
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -161,6 +174,8 @@ export default function ForgotPasswordScreen() {
       );
     } catch (err) {
       // Error is caught in auth-store
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { generateUUID } from "../utils/uuid";
 import {
   View,
   Text,
@@ -45,6 +46,8 @@ import { CreditCard } from "../types";
 import { Colors } from "../../constants/colors";
 
 export default function CreditCardModal() {
+  const isSubmittingRef = useRef(false);
+  const idempotencyKeyRef = useRef(generateUUID());
   const {
     isCreditCardModalOpen,
     closeCreditCardModal,
@@ -137,6 +140,7 @@ export default function CreditCardModal() {
 
   useEffect(() => {
     if (isCreditCardModalOpen) {
+      idempotencyKeyRef.current = generateUUID();
       if (editingCreditCard) {
         setActiveTab("MANAGE");
         setSelectedCard(editingCreditCard);
@@ -190,11 +194,17 @@ export default function CreditCardModal() {
 
   // Add Card action
   const handleAddCard = async () => {
-    if (saving) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving) {
+      isSubmittingRef.current = false;
+      return;
+    }
 
     if (!cardName.trim()) {
       triggerErrorEffects();
       toastStore.show("Card Name is required.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -202,6 +212,7 @@ export default function CreditCardModal() {
     if (isNaN(limit) || limit <= 0) {
       triggerErrorEffects();
       toastStore.show("Credit Limit must be a positive number.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -212,6 +223,7 @@ export default function CreditCardModal() {
         "Statement Cutoff Day must be between 1 and 31.",
         "error",
       );
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -219,6 +231,7 @@ export default function CreditCardModal() {
     if (isNaN(due) || due < 1 || due > 31) {
       triggerErrorEffects();
       toastStore.show("Payment Due Day must be between 1 and 31.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -231,7 +244,7 @@ export default function CreditCardModal() {
       statementCutoffDay: cutDay,
       paymentDueDay: due,
       macroAssetId: selectedMacroAssetId,
-    });
+    }, idempotencyKeyRef.current);
 
     if (res.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
@@ -246,15 +259,22 @@ export default function CreditCardModal() {
       toastStore.show(res.error || "Failed to create credit card", "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   // Update Card action
   const handleUpdateCard = async () => {
-    if (saving || !selectedCard) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving || !selectedCard) {
+      isSubmittingRef.current = false;
+      return;
+    }
 
     if (!cardName.trim()) {
       triggerErrorEffects();
       toastStore.show("Card Name is required.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -262,6 +282,7 @@ export default function CreditCardModal() {
     if (isNaN(limit) || limit <= 0) {
       triggerErrorEffects();
       toastStore.show("Credit Limit must be a positive number.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -272,6 +293,7 @@ export default function CreditCardModal() {
         "Statement Cutoff Day must be between 1 and 31.",
         "error",
       );
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -279,6 +301,7 @@ export default function CreditCardModal() {
     if (isNaN(due) || due < 1 || due > 31) {
       triggerErrorEffects();
       toastStore.show("Payment Due Day must be between 1 and 31.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -291,7 +314,7 @@ export default function CreditCardModal() {
       statementCutoffDay: cutDay,
       paymentDueDay: due,
       macroAssetId: selectedMacroAssetId,
-    });
+    }, idempotencyKeyRef.current);
 
     if (res.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
@@ -305,14 +328,20 @@ export default function CreditCardModal() {
       toastStore.show(res.error || "Failed to update credit card", "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   // Delete Card action
   const handleDeleteCard = async () => {
-    if (saving || !selectedCard) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving || !selectedCard) {
+      isSubmittingRef.current = false;
+      return;
+    }
 
     setSaving(true);
-    const res = await deleteCreditCard(selectedCard.id);
+    const res = await deleteCreditCard(selectedCard.id, idempotencyKeyRef.current);
 
     if (res.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
@@ -329,15 +358,24 @@ export default function CreditCardModal() {
       toastStore.show(res.error || "Failed to delete credit card", "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   // Record Spend Action
   const handleRecordSpend = async () => {
     if (!selectedCard) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving) {
+      isSubmittingRef.current = false;
+      return;
+    }
+
     const spendAmt = parseFloat(spendAmountPesos);
     if (isNaN(spendAmt) || spendAmt <= 0) {
       triggerErrorEffects();
       toastStore.show("Spend amount must be a positive number.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -352,6 +390,7 @@ export default function CreditCardModal() {
         `Spend amount exceeds your available credit limit (₱${(availableSpendCents / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}).`,
         "error",
       );
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -362,7 +401,7 @@ export default function CreditCardModal() {
         : 0;
 
     setSaving(true);
-    const res = await recordSpend(selectedCard.id, spendCents);
+    const res = await recordSpend(selectedCard.id, spendCents, idempotencyKeyRef.current);
 
     if (res.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
@@ -384,20 +423,30 @@ export default function CreditCardModal() {
       setSpendAmountPesos("");
       triggerNetworkUpdate();
       loadData();
+      idempotencyKeyRef.current = generateUUID(); // refresh key on success
     } else {
       triggerErrorEffects();
       toastStore.show(res.error || "Failed to record spend", "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   // Record Mid Cycle Payment Action
   const handleRecordPayment = async () => {
     if (!selectedCard) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving) {
+      isSubmittingRef.current = false;
+      return;
+    }
+
     const payAmt = parseFloat(paymentAmountPesos);
     if (isNaN(payAmt) || payAmt <= 0) {
       triggerErrorEffects();
       toastStore.show("Payment amount must be a positive number.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -411,11 +460,12 @@ export default function CreditCardModal() {
         `Payment amount cannot exceed your unpaid balance (₱${(effectiveSpend / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}).`,
         "error",
       );
+      isSubmittingRef.current = false;
       return;
     }
 
     setSaving(true);
-    const res = await recordMidCyclePayment(selectedCard.id, payCents);
+    const res = await recordMidCyclePayment(selectedCard.id, payCents, idempotencyKeyRef.current);
 
     if (res.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
@@ -425,11 +475,13 @@ export default function CreditCardModal() {
       setPaymentAmountPesos("");
       triggerNetworkUpdate();
       loadData();
+      idempotencyKeyRef.current = generateUUID(); // refresh key on success
     } else {
       triggerErrorEffects();
       toastStore.show(res.error || "Failed to record payment", "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   // Reset Billing Cycle Action
@@ -439,8 +491,15 @@ export default function CreditCardModal() {
 
   const executeResetCard = async () => {
     if (!selectedCard) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving) {
+      isSubmittingRef.current = false;
+      return;
+    }
+
     setSaving(true);
-    const res = await resetCreditCard(selectedCard.id);
+    const res = await resetCreditCard(selectedCard.id, idempotencyKeyRef.current);
     if (res.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
         () => {},
@@ -449,11 +508,13 @@ export default function CreditCardModal() {
       setShowResetConfirm(false);
       triggerNetworkUpdate();
       loadData();
+      idempotencyKeyRef.current = generateUUID(); // refresh key on success
     } else {
       triggerErrorEffects();
       toastStore.show(res.error || "Failed to reset credit card", "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   return (

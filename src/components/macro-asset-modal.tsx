@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -18,8 +18,11 @@ import { createMacroAsset } from "../services/api/endpoints/macro-assets";
 import { uploadImageToSupabase } from "../utils/upload";
 import { Colors } from "../../constants/colors";
 import { Strings } from "../../constants/string";
+import { generateUUID } from "../utils/uuid";
 
 export default function MacroAssetModal() {
+  const isSubmittingRef = useRef(false);
+  const idempotencyKeyRef = useRef(generateUUID());
   const { isMacroAssetModalOpen, closeMacroAssetModal, triggerNetworkUpdate } = useUIStore();
   const toastStore = useToastStore();
 
@@ -30,6 +33,12 @@ export default function MacroAssetModal() {
   const [targetGoal, setTargetGoal] = useState("");
   const [colorCode, setColorCode] = useState("#373737");
   const [imageUri, setImageUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isMacroAssetModalOpen) {
+      idempotencyKeyRef.current = generateUUID();
+    }
+  }, [isMacroAssetModalOpen]);
 
   const resetForm = () => {
     setBankName("");
@@ -64,15 +73,22 @@ export default function MacroAssetModal() {
   };
 
   const handleSave = async () => {
-    if (saving) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving) {
+      isSubmittingRef.current = false;
+      return;
+    }
     if (!bankName.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Bank Name is required.", "error");
+      isSubmittingRef.current = false;
       return;
     }
     if (!purpose.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Purpose is required.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -80,6 +96,7 @@ export default function MacroAssetModal() {
     if (numBalance < 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Balance cannot be negative.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -87,6 +104,7 @@ export default function MacroAssetModal() {
     if (numTargetGoal !== null && numTargetGoal <= 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Target Goal must be greater than zero.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -95,6 +113,7 @@ export default function MacroAssetModal() {
     if (colorCode && !hexRegex.test(colorCode)) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Color code must be a valid hex color (e.g. #373737).", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -109,6 +128,7 @@ export default function MacroAssetModal() {
         setSaving(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
         toastStore.show(err.message || "Failed to upload icon image.", "error");
+        isSubmittingRef.current = false;
         return;
       }
     }
@@ -124,7 +144,7 @@ export default function MacroAssetModal() {
       targetGoal: targetGoalInCents,
       colorCode: colorCode.trim(),
       iconUrl: uploadedUrl,
-    });
+    }, idempotencyKeyRef.current);
 
     if (res.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -137,6 +157,7 @@ export default function MacroAssetModal() {
       toastStore.show(res.error || "Failed to create macro asset", "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   const handleClose = () => {

@@ -20,11 +20,12 @@ export interface CreateCashFlowParams {
   notes?: string;
 }
 
-export async function createCashFlow(params: CreateCashFlowParams): Promise<Result<CashFlow, string>> {
+export async function createCashFlow(params: CreateCashFlowParams, idempotencyKey?: string): Promise<Result<CashFlow, string>> {
   try {
     const response = await apiClient<{ data: CashFlow }>('/cash-flows', {
       method: 'POST',
       body: JSON.stringify(params),
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(response.data);
   } catch (error: any) {
