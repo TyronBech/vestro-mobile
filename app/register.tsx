@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
-  KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
@@ -41,14 +41,16 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
 
-  // Reanimated shared value for card shake
+  // Reanimated shared value for card shake & keyboard offset
   const shakeOffset = useSharedValue(0);
+  const keyboardOffset = useSharedValue(0);
 
   // Animated style for card (combining rotation and translation)
   const animatedCardStyle = useAnimatedStyle(() => ({
     transform: [
       { rotate: "0deg" },
-      { translateX: shakeOffset.value }
+      { translateX: shakeOffset.value },
+      { translateY: keyboardOffset.value }
     ],
   }));
 
@@ -75,6 +77,25 @@ export default function RegisterScreen() {
       triggerErrorEffects();
     }
   }, [error, triggerErrorEffects]);
+
+  // Keyboard avoidance effect: translate only the card when typing
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSubscription = Keyboard.addListener(showEvent, () => {
+      keyboardOffset.value = withTiming(-110, { duration: 250 });
+    });
+
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      keyboardOffset.value = withTiming(0, { duration: 250 });
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, [keyboardOffset]);
 
   const handleRegister = async () => {
     if (isSubmittingRef.current) return;
@@ -146,10 +167,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={{ flex: 1 }}
-    >
+    <View style={{ flex: 1 }}>
       <StatusBar style="dark" />
       <View 
         style={{ 
@@ -349,6 +367,6 @@ export default function RegisterScreen() {
         </View>
 
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
