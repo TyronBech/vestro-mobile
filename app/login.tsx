@@ -479,6 +479,22 @@ export default function LoginScreen() {
                     {Strings.forgotPasswordButtonText}
                   </Text>
                 </TouchableOpacity>
+
+                {/* Register Link */}
+                <TouchableOpacity
+                  onPress={() => {
+                    try {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                    } catch (e) {}
+                    clearError();
+                    router.push("/register");
+                  }}
+                  className="mt-2 py-1 items-center"
+                >
+                  <Text className="text-background/90 text-xs font-bold uppercase tracking-widest border-b border-background/40 pb-0.5">
+                    {Strings.registerLinkText}
+                  </Text>
+                </TouchableOpacity>
               </>
             ) : (
               <>
