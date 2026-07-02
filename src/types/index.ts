@@ -123,6 +123,7 @@ export interface MacroAsset {
   balance: number; // in cents
   colorCode: string;
   iconUrl: string | null;
+  cardBrand?: 'MASTERCARD' | 'VISA';
   createdAt: string;
   updatedAt: string;
 }
@@ -134,6 +135,7 @@ export interface CreateMacroAssetParams {
   targetGoal?: number | null;
   iconUrl?: string | null;
   colorCode?: string | null;
+  cardBrand?: 'MASTERCARD' | 'VISA';
 }
 
 export type CoreNetworkType =
@@ -206,6 +208,7 @@ export interface CreditCard {
   midCyclePaid: number; // in cents
   macroAssetId: string | null;
   macroAsset?: MacroAsset | null;
+  cardBrand?: 'MASTERCARD' | 'VISA';
   createdAt: string;
   updatedAt: string;
 }
@@ -216,6 +219,7 @@ export interface CreateCreditCardParams {
   statementCutoffDay: number;
   paymentDueDay: number;
   macroAssetId?: string | null;
+  cardBrand?: 'MASTERCARD' | 'VISA';
 }
 
 export interface UpdateCreditCardParams {
@@ -224,6 +228,7 @@ export interface UpdateCreditCardParams {
   statementCutoffDay?: number;
   paymentDueDay?: number;
   macroAssetId?: string | null;
+  cardBrand?: 'MASTERCARD' | 'VISA';
 }
 
 export interface CreditShieldCardStatus {

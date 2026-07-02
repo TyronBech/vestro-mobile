@@ -33,6 +33,7 @@ export default function MacroAssetModal() {
   const [targetGoal, setTargetGoal] = useState("");
   const [colorCode, setColorCode] = useState("#373737");
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [cardBrand, setCardBrand] = useState<'VISA' | 'MASTERCARD'>('VISA');
 
   useEffect(() => {
     if (isMacroAssetModalOpen) {
@@ -47,6 +48,7 @@ export default function MacroAssetModal() {
     setTargetGoal("");
     setColorCode("#373737");
     setImageUri(null);
+    setCardBrand("VISA");
   };
 
   const handlePickImage = async () => {
@@ -144,6 +146,7 @@ export default function MacroAssetModal() {
       targetGoal: targetGoalInCents,
       colorCode: colorCode.trim(),
       iconUrl: uploadedUrl,
+      cardBrand,
     }, idempotencyKeyRef.current);
 
     if (res.ok) {
@@ -174,18 +177,57 @@ export default function MacroAssetModal() {
     >
       <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
         <View className="space-y-4">
-          {/* Bank Name */}
-          <View>
-            <Text className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-1.5">
-              Bank Name *
-            </Text>
-            <TextInput
-              value={bankName}
-              onChangeText={setBankName}
-              placeholder="e.g. BPI, LANDBANK, GCash"
-              placeholderTextColor={Colors.textMuted}
-              className="border border-border rounded-xl px-4 py-2.5 text-sm font-bold text-textPrimary bg-backgroundLight"
-            />
+          {/* Bank Name & Card Brand */}
+          <View className="flex-row space-x-3 mb-3">
+            <View className="flex-1">
+              <Text className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-1.5">
+                Bank Name *
+              </Text>
+              <TextInput
+                value={bankName}
+                onChangeText={setBankName}
+                placeholder="e.g. BPI, LANDBANK, GCash"
+                placeholderTextColor={Colors.textMuted}
+                className="border border-border rounded-xl px-4 py-2.5 text-sm font-bold text-textPrimary bg-backgroundLight"
+              />
+            </View>
+            <View className="flex-1 ml-3">
+              <Text className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-1.5">
+                Card Brand *
+              </Text>
+              <View className="flex-row">
+                {(["VISA", "MASTERCARD"] as const).map((brand, idx) => {
+                  const isSelected = cardBrand === brand;
+                  return (
+                    <TouchableOpacity
+                      key={brand}
+                      onPress={async () => {
+                        try {
+                          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        } catch (e) {}
+                        setCardBrand(brand);
+                      }}
+                      className={`flex-1 items-center justify-center border rounded-xl py-2.5 ${
+                        isSelected
+                          ? "border-textPrimary bg-backgroundDark"
+                          : "border-border bg-backgroundLight"
+                      } ${idx > 0 ? "ml-2" : ""}`}
+                    >
+                      <Text
+                        style={{
+                          color: isSelected
+                            ? Colors.background
+                            : Colors.textPrimary,
+                        }}
+                        className="text-[10px] font-black uppercase tracking-widest"
+                      >
+                        {brand === "MASTERCARD" ? "MC" : brand}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
           </View>
 
           {/* Purpose */}

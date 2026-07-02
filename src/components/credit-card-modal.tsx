@@ -82,6 +82,7 @@ export default function CreditCardModal() {
   const [selectedMacroAssetId, setSelectedMacroAssetId] = useState<
     string | null
   >(null);
+  const [cardBrand, setCardBrand] = useState<'VISA' | 'MASTERCARD'>('VISA');
 
   // Quick transaction fields
   const [spendAmountPesos, setSpendAmountPesos] = useState("");
@@ -161,6 +162,7 @@ export default function CreditCardModal() {
       setCutoffDay(selectedCard.statementCutoffDay.toString());
       setDueDay(selectedCard.paymentDueDay.toString());
       setSelectedMacroAssetId(selectedCard.macroAssetId);
+      setCardBrand(selectedCard.cardBrand ?? "VISA");
     } else if (activeTab === "ADD") {
       // Clear fields for adding new
       setCardName("");
@@ -168,6 +170,7 @@ export default function CreditCardModal() {
       setCutoffDay("");
       setDueDay("");
       setSelectedMacroAssetId(null);
+      setCardBrand("VISA");
     }
     setSpendAmountPesos("");
     setPaymentAmountPesos("");
@@ -180,6 +183,7 @@ export default function CreditCardModal() {
     setCutoffDay("");
     setDueDay("");
     setSelectedMacroAssetId(null);
+    setCardBrand("VISA");
     setSpendAmountPesos("");
     setPaymentAmountPesos("");
     setActiveTab("CHOOSE");
@@ -244,6 +248,7 @@ export default function CreditCardModal() {
       statementCutoffDay: cutDay,
       paymentDueDay: due,
       macroAssetId: selectedMacroAssetId,
+      cardBrand,
     }, idempotencyKeyRef.current);
 
     if (res.ok) {
@@ -314,6 +319,7 @@ export default function CreditCardModal() {
       statementCutoffDay: cutDay,
       paymentDueDay: due,
       macroAssetId: selectedMacroAssetId,
+      cardBrand,
     }, idempotencyKeyRef.current);
 
     if (res.ok) {
@@ -729,17 +735,56 @@ export default function CreditCardModal() {
               <>
                 <View className="space-y-4">
                   {/* Card Name */}
-                  <View>
-                    <Text className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-1.5">
-                      Card Name *
-                    </Text>
-                    <TextInput
-                      value={cardName}
-                      onChangeText={setCardName}
-                      placeholder="e.g. UnionBank Rewards, BPI Blue"
-                      placeholderTextColor={Colors.textMuted}
-                      className="border border-border rounded-xl px-4 py-2.5 text-sm font-bold text-textPrimary bg-backgroundLight"
-                    />
+                  <View className="flex-row space-x-3 mb-3">
+                    <View className="flex-1">
+                      <Text className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-1.5">
+                        Card Name *
+                      </Text>
+                      <TextInput
+                        value={cardName}
+                        onChangeText={setCardName}
+                        placeholder="e.g. UnionBank Rewards, BPI Blue"
+                        placeholderTextColor={Colors.textMuted}
+                        className="border border-border rounded-xl px-4 py-2.5 text-sm font-bold text-textPrimary bg-backgroundLight"
+                      />
+                    </View>
+                    <View className="flex-1 ml-3">
+                      <Text className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-1.5">
+                        Card Brand *
+                      </Text>
+                      <View className="flex-row">
+                        {(["VISA", "MASTERCARD"] as const).map((brand, idx) => {
+                          const isSelected = cardBrand === brand;
+                          return (
+                            <TouchableOpacity
+                              key={brand}
+                              onPress={async () => {
+                                try {
+                                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                } catch (e) {}
+                                setCardBrand(brand);
+                              }}
+                              className={`flex-1 items-center justify-center border rounded-xl py-2.5 ${
+                                isSelected
+                                  ? "border-textPrimary bg-backgroundDark"
+                                  : "border-border bg-backgroundLight"
+                              } ${idx > 0 ? "ml-2" : ""}`}
+                            >
+                              <Text
+                                style={{
+                                  color: isSelected
+                                    ? Colors.background
+                                    : Colors.textPrimary,
+                                }}
+                                className="text-[10px] font-black uppercase tracking-widest"
+                              >
+                                {brand === "MASTERCARD" ? "MC" : brand}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
                   </View>
 
                   {/* Credit Limit */}

@@ -9,6 +9,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import VisaIcon from '../../assets/svgs/visa.svg';
+import MastercardIcon from '../../assets/svgs/mastercard.svg';
 
 import * as Haptics from "expo-haptics";
 import { useAuthStore } from "../../src/store/auth-store";
@@ -41,6 +42,7 @@ export default function HomeTabScreen() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [netWorthCardBrand, setNetWorthCardBrand] = useState<'VISA' | 'MASTERCARD'>('VISA');
 
   const networkUpdateTrigger = useUIStore((state) => state.networkUpdateTrigger);
   const budgetUpdateTrigger = useUIStore((state) => state.budgetUpdateTrigger);
@@ -254,7 +256,7 @@ export default function HomeTabScreen() {
             {showBalance ? formatCurrency(balanceCents, user.currency) : "••••••••"}
           </Text>
 
-            {/* Bottom Row: User Name & Visa Logo */}
+            {/* Bottom Row: User Name & Visa/Mastercard Logo (Tap to Toggle) */}
             <View className="flex-row justify-between items-end mt-2">
               <View>
                 <Text className="text-gray-400 text-[10px] uppercase tracking-widest mb-1">
@@ -264,7 +266,21 @@ export default function HomeTabScreen() {
                   {user.name || "User"}
                 </Text>
               </View>
-              <VisaIcon width={50} height={16} color={Colors.background} />
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={async () => {
+                  try {
+                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  } catch (e) {}
+                  setNetWorthCardBrand(prev => prev === 'VISA' ? 'MASTERCARD' : 'VISA');
+                }}
+              >
+                {netWorthCardBrand === 'VISA' ? (
+                  <VisaIcon width={50} height={16} color={Colors.background} />
+                ) : (
+                  <MastercardIcon width={40} height={25} />
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         </View>
