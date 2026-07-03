@@ -6,13 +6,9 @@
 export const Strings = {
   // App info / Developer metadata
   designerCredit: "DESIGN BY TYRON BECHAYDA",
-  engineVersion: "FREEDOM ENGINE V1.0.0",
+  engineVersion: "POVERTY FIREWALL V1.0.0",
   pageIndicator: "11 / 12",
   languageCode: "EN",
-  
-  // Defaults / Inputs
-  defaultEmail: "tyron.bechayda@vestro.app",
-  defaultPassword: "Password123!",
   
   // Login Screen
   loginSubtitle: "Login Credentials",
@@ -24,6 +20,18 @@ export const Strings = {
   passwordPlaceholder: "••••••••",
   googleLoginButtonText: "CONTINUE WITH GOOGLE",
   googleLoginError: "Google Sign-In was cancelled or failed.",
+  
+  // Register Screen
+  registerSubtitle: "New Account Credentials",
+  nameLabel: "Full Name",
+  namePlaceholder: "First Last",
+  confirmPasswordLabel: "Confirm Password",
+  confirmPasswordPlaceholder: "••••••••",
+  registerButtonText: "REGISTER",
+  registerLinkText: "CREATE AN ACCOUNT",
+  loginLinkText: "ALREADY HAVE AN ACCOUNT? LOGIN",
+  validationPasswordsMatch: "Passwords do not match.",
+  validationPasswordLength: "Password must be at least 8 characters.",
   
   // Alerts / Errors
   authErrorTitle: "Auth Error",

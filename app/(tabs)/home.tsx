@@ -9,6 +9,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import VisaIcon from '../../assets/svgs/visa.svg';
+import MastercardIcon from '../../assets/svgs/mastercard.svg';
 
 import * as Haptics from "expo-haptics";
 import { useAuthStore } from "../../src/store/auth-store";
@@ -25,6 +26,7 @@ import { useUIStore } from "../../src/store/ui-store";
 import { fetchCreditCards, CreditCard } from "../../src/services/api/endpoints/credit-cards";
 import { CreditCardStack } from "../../src/components/CreditCardStack";
 import { fetchNotifications } from "../../src/services/api/endpoints/notification";
+import FlatModal from "../../src/components/flat-modal";
 
 
 
@@ -41,6 +43,8 @@ export default function HomeTabScreen() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [netWorthCardBrand, setNetWorthCardBrand] = useState<'VISA' | 'MASTERCARD'>('VISA');
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
 
   const networkUpdateTrigger = useUIStore((state) => state.networkUpdateTrigger);
   const budgetUpdateTrigger = useUIStore((state) => state.budgetUpdateTrigger);
@@ -87,7 +91,7 @@ export default function HomeTabScreen() {
         }
         const flowsRes = await fetchCashFlows();
         if (flowsRes.ok) {
-          setCashFlows(flowsRes.value.slice(0, 5));
+          setCashFlows(flowsRes.value);
         }
       } else {
         await apiClient("/auth/login");
@@ -121,7 +125,7 @@ export default function HomeTabScreen() {
         }
         const flowsRes = await fetchCashFlows();
         if (flowsRes.ok) {
-          setCashFlows(flowsRes.value.slice(0, 5));
+          setCashFlows(flowsRes.value);
         }
       }
       try {
@@ -144,7 +148,7 @@ export default function HomeTabScreen() {
   }, [checkConnection, isSessionLocked, networkUpdateTrigger, budgetUpdateTrigger]);
 
   const displayAssets = macroAssets;
-  const displayCashFlows = cashFlows;
+  const displayCashFlows = cashFlows.slice(0, 5);
 
   const toggleBalanceVisibility = async () => {
     try {
@@ -254,7 +258,7 @@ export default function HomeTabScreen() {
             {showBalance ? formatCurrency(balanceCents, user.currency) : "••••••••"}
           </Text>
 
-            {/* Bottom Row: User Name & Visa Logo */}
+            {/* Bottom Row: User Name & Visa/Mastercard Logo (Tap to Toggle) */}
             <View className="flex-row justify-between items-end mt-2">
               <View>
                 <Text className="text-gray-400 text-[10px] uppercase tracking-widest mb-1">
@@ -264,7 +268,21 @@ export default function HomeTabScreen() {
                   {user.name || "User"}
                 </Text>
               </View>
-              <VisaIcon width={50} height={16} color={Colors.background} />
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={async () => {
+                  try {
+                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  } catch (e) {}
+                  setNetWorthCardBrand(prev => prev === 'VISA' ? 'MASTERCARD' : 'VISA');
+                }}
+              >
+                {netWorthCardBrand === 'VISA' ? (
+                  <VisaIcon width={50} height={16} color={Colors.background} />
+                ) : (
+                  <MastercardIcon width={40} height={25} />
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -320,7 +338,7 @@ export default function HomeTabScreen() {
                 Latest Activity
               </Text>
             </View>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/analytics')}>
+            <TouchableOpacity onPress={() => setIsActivityModalOpen(true)}>
               <Text className="text-actionPrimary text-[10px] font-bold uppercase tracking-widest">
                 See All
               </Text>
@@ -368,6 +386,78 @@ export default function HomeTabScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Latest Activity Modal (Last 90 Days) */}
+      <FlatModal
+        visible={isActivityModalOpen}
+        onClose={() => setIsActivityModalOpen(false)}
+        title="Latest Activity (90 Days)"
+        headerIcon={<Activity size={20} color={Colors.actionPrimary} strokeWidth={2.5} />}
+      >
+        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380 }} contentContainerStyle={{ paddingBottom: 16 }}>
+          {(() => {
+            const ninetyDaysAgo = new Date();
+            ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+            
+            const filteredFlows = cashFlows.filter(flow => {
+              const flowDate = new Date(flow.createdAt);
+              return flowDate >= ninetyDaysAgo;
+            });
+
+            if (filteredFlows.length === 0) {
+              return (
+                <View className="py-8 items-center justify-center">
+                  <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center">
+                    No activity logged in the last 90 days
+                  </Text>
+                </View>
+              );
+            }
+
+            return filteredFlows.map((flow, index) => {
+              const isInflow = flow.type === 'INFLOW';
+              const flowDate = new Date(flow.createdAt);
+              const formattedDate = flowDate.toLocaleDateString("en-PH", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              });
+
+              return (
+                <View key={flow.id} className={`flex-row items-center justify-between ${index > 0 ? 'border-t border-gray-100 pt-4 mt-4' : ''}`}>
+                  <View className="flex-row items-center flex-1 pr-4">
+                    <View className={`w-10 h-10 rounded-xl items-center justify-center ${isInflow ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                      {isInflow ? (
+                        <ArrowDownLeft size={Sizes.iconSmall} stroke={Colors.successAlt} strokeWidth={Sizes.strokeMedium} />
+                      ) : (
+                        <ArrowUpRight size={Sizes.iconSmall} stroke={Colors.actionPrimary} strokeWidth={Sizes.strokeMedium} />
+                      )}
+                    </View>
+                    <View className="ml-3 flex-1">
+                      <Text className="text-textPrimary font-semibold text-sm" numberOfLines={1}>
+                        {flow.notes || (isInflow ? 'Inflow' : 'Outflow')}
+                      </Text>
+                      <View className="flex-row items-center mt-0.5">
+                        <Text className="text-gray-400 text-[9px] uppercase tracking-wider" numberOfLines={1}>
+                          {flow.coreNetwork?.name || 'Vestro Network'}
+                        </Text>
+                        <Text className="text-gray-300 text-[9px] mx-1">•</Text>
+                        <Text className="text-gray-400 text-[9px] uppercase tracking-wider" numberOfLines={1}>
+                          {formattedDate}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  <Text className={`font-bold tracking-wider text-sm ${isInflow ? 'text-emerald-600' : 'text-actionPrimary'}`}>
+                    {isInflow ? '+' : '-'}{formatCurrency(flow.amount)}
+                  </Text>
+                </View>
+              );
+            });
+          })()}
+        </ScrollView>
+      </FlatModal>
     </View>
   );
 }

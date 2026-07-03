@@ -18,6 +18,7 @@ import { CreditCard } from 'lucide-react-native';
 import { MacroAsset } from '../services/api/endpoints/macro-assets';
 import * as Haptics from 'expo-haptics';
 import MastercardIcon from '../../assets/svgs/mastercard.svg';
+import VisaIcon from '../../assets/svgs/visa.svg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
@@ -244,7 +245,11 @@ function StackCard({
                 {asset.purpose}
               </Text>
             </View>
-            <MastercardIcon width={45} height={28} />
+            {asset.cardBrand === "VISA" ? (
+              <VisaIcon width={50} height={18} color={Colors.background} />
+            ) : (
+              <MastercardIcon width={45} height={28} />
+            )}
           </View>
         </View>
       </View>
@@ -283,8 +288,17 @@ export function MacroAssetStack({ assets, showBalance }: Props) {
 
   const panGesture = useMemo(() => {
     const cardCount = assets.length;
+    const cardWidth = SCREEN_WIDTH - 48;
+    const hitSlopX = -Math.round((cardWidth - 120) / 2);
+    const hitSlopY = -Math.round((200 - 120) / 2);
 
     return Gesture.Pan()
+      .hitSlop({
+        left: hitSlopX,
+        right: hitSlopX,
+        top: hitSlopY,
+        bottom: hitSlopY,
+      })
       .onStart(() => {
         dragDirection.value = 0;
       })

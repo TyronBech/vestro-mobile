@@ -24,12 +24,14 @@ export async function fetchCoreNetworks(): Promise<Result<CoreNetwork[], string>
 }
 
 export async function createCoreNetwork(
-  params: CreateCoreNetworkParams
+  params: CreateCoreNetworkParams,
+  idempotencyKey?: string
 ): Promise<Result<CoreNetwork, string>> {
   try {
     const response = await apiClient<CoreNetwork>('/core-network', {
       method: 'POST',
       body: JSON.stringify(params),
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(response);
   } catch (error: any) {
@@ -39,12 +41,14 @@ export async function createCoreNetwork(
 
 export async function updateCoreNetwork(
   id: string,
-  params: UpdateCoreNetworkParams
+  params: UpdateCoreNetworkParams,
+  idempotencyKey?: string
 ): Promise<Result<CoreNetwork, string>> {
   try {
     const response = await apiClient<CoreNetwork>(`/core-network/${id}`, {
       method: 'PUT',
       body: JSON.stringify(params),
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(response);
   } catch (error: any) {
@@ -52,10 +56,11 @@ export async function updateCoreNetwork(
   }
 }
 
-export async function deleteCoreNetwork(id: string): Promise<Result<void, string>> {
+export async function deleteCoreNetwork(id: string, idempotencyKey?: string): Promise<Result<void, string>> {
   try {
     await apiClient<void>(`/core-network/${id}`, {
       method: 'DELETE',
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(undefined);
   } catch (error: any) {

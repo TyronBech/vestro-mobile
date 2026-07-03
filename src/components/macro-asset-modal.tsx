@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -18,8 +18,11 @@ import { createMacroAsset } from "../services/api/endpoints/macro-assets";
 import { uploadImageToSupabase } from "../utils/upload";
 import { Colors } from "../../constants/colors";
 import { Strings } from "../../constants/string";
+import { generateUUID } from "../utils/uuid";
 
 export default function MacroAssetModal() {
+  const isSubmittingRef = useRef(false);
+  const idempotencyKeyRef = useRef(generateUUID());
   const { isMacroAssetModalOpen, closeMacroAssetModal, triggerNetworkUpdate } = useUIStore();
   const toastStore = useToastStore();
 
@@ -30,6 +33,13 @@ export default function MacroAssetModal() {
   const [targetGoal, setTargetGoal] = useState("");
   const [colorCode, setColorCode] = useState("#373737");
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [cardBrand, setCardBrand] = useState<'VISA' | 'MASTERCARD'>('VISA');
+
+  useEffect(() => {
+    if (isMacroAssetModalOpen) {
+      idempotencyKeyRef.current = generateUUID();
+    }
+  }, [isMacroAssetModalOpen]);
 
   const resetForm = () => {
     setBankName("");
@@ -38,6 +48,7 @@ export default function MacroAssetModal() {
     setTargetGoal("");
     setColorCode("#373737");
     setImageUri(null);
+    setCardBrand("VISA");
   };
 
   const handlePickImage = async () => {
@@ -64,15 +75,22 @@ export default function MacroAssetModal() {
   };
 
   const handleSave = async () => {
-    if (saving) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving) {
+      isSubmittingRef.current = false;
+      return;
+    }
     if (!bankName.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Bank Name is required.", "error");
+      isSubmittingRef.current = false;
       return;
     }
     if (!purpose.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Purpose is required.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -80,6 +98,7 @@ export default function MacroAssetModal() {
     if (numBalance < 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Balance cannot be negative.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -87,6 +106,7 @@ export default function MacroAssetModal() {
     if (numTargetGoal !== null && numTargetGoal <= 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Target Goal must be greater than zero.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -95,6 +115,7 @@ export default function MacroAssetModal() {
     if (colorCode && !hexRegex.test(colorCode)) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Color code must be a valid hex color (e.g. #373737).", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -109,6 +130,7 @@ export default function MacroAssetModal() {
         setSaving(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
         toastStore.show(err.message || "Failed to upload icon image.", "error");
+        isSubmittingRef.current = false;
         return;
       }
     }
@@ -124,7 +146,8 @@ export default function MacroAssetModal() {
       targetGoal: targetGoalInCents,
       colorCode: colorCode.trim(),
       iconUrl: uploadedUrl,
-    });
+      cardBrand,
+    }, idempotencyKeyRef.current);
 
     if (res.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -137,6 +160,7 @@ export default function MacroAssetModal() {
       toastStore.show(res.error || "Failed to create macro asset", "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   const handleClose = () => {
@@ -153,18 +177,57 @@ export default function MacroAssetModal() {
     >
       <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
         <View className="space-y-4">
-          {/* Bank Name */}
-          <View>
-            <Text className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-1.5">
-              Bank Name *
-            </Text>
-            <TextInput
-              value={bankName}
-              onChangeText={setBankName}
-              placeholder="e.g. BPI, LANDBANK, GCash"
-              placeholderTextColor={Colors.textMuted}
-              className="border border-border rounded-xl px-4 py-2.5 text-sm font-bold text-textPrimary bg-backgroundLight"
-            />
+          {/* Bank Name & Card Brand */}
+          <View className="flex-row space-x-3 mb-3">
+            <View className="flex-1">
+              <Text className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-1.5">
+                Bank Name *
+              </Text>
+              <TextInput
+                value={bankName}
+                onChangeText={setBankName}
+                placeholder="e.g. BPI, LANDBANK, GCash"
+                placeholderTextColor={Colors.textMuted}
+                className="border border-border rounded-xl px-4 py-2.5 text-sm font-bold text-textPrimary bg-backgroundLight"
+              />
+            </View>
+            <View className="flex-1 ml-3">
+              <Text className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-1.5">
+                Card Brand *
+              </Text>
+              <View className="flex-row">
+                {(["VISA", "MASTERCARD"] as const).map((brand, idx) => {
+                  const isSelected = cardBrand === brand;
+                  return (
+                    <TouchableOpacity
+                      key={brand}
+                      onPress={async () => {
+                        try {
+                          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        } catch (e) {}
+                        setCardBrand(brand);
+                      }}
+                      className={`flex-1 items-center justify-center border rounded-xl py-2.5 ${
+                        isSelected
+                          ? "border-textPrimary bg-backgroundDark"
+                          : "border-border bg-backgroundLight"
+                      } ${idx > 0 ? "ml-2" : ""}`}
+                    >
+                      <Text
+                        style={{
+                          color: isSelected
+                            ? Colors.background
+                            : Colors.textPrimary,
+                        }}
+                        className="text-[10px] font-black uppercase tracking-widest"
+                      >
+                        {brand === "MASTERCARD" ? "MC" : brand}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
           </View>
 
           {/* Purpose */}

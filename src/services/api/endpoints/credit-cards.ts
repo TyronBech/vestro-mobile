@@ -19,12 +19,14 @@ export async function fetchCreditCards(): Promise<Result<CreditCard[], string>> 
 }
 
 export async function createCreditCard(
-  params: CreateCreditCardParams
+  params: CreateCreditCardParams,
+  idempotencyKey?: string
 ): Promise<Result<CreditCard, string>> {
   try {
     const response = await apiClient<{ data: CreditCard }>('/credit-cards', {
       method: 'POST',
       body: JSON.stringify(params),
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(response.data);
   } catch (error: any) {
@@ -34,12 +36,14 @@ export async function createCreditCard(
 
 export async function updateCreditCard(
   id: string,
-  params: UpdateCreditCardParams
+  params: UpdateCreditCardParams,
+  idempotencyKey?: string
 ): Promise<Result<CreditCard, string>> {
   try {
     const response = await apiClient<{ data: CreditCard }>(`/credit-cards/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(params),
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(response.data);
   } catch (error: any) {
@@ -47,10 +51,11 @@ export async function updateCreditCard(
   }
 }
 
-export async function deleteCreditCard(id: string): Promise<Result<boolean, string>> {
+export async function deleteCreditCard(id: string, idempotencyKey?: string): Promise<Result<boolean, string>> {
   try {
     await apiClient<{ data: { success: boolean } }>(`/credit-cards/${id}`, {
       method: 'DELETE',
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(true);
   } catch (error: any) {
@@ -58,11 +63,12 @@ export async function deleteCreditCard(id: string): Promise<Result<boolean, stri
   }
 }
 
-export async function recordSpend(id: string, amount: number): Promise<Result<CreditCard, string>> {
+export async function recordSpend(id: string, amount: number, idempotencyKey?: string): Promise<Result<CreditCard, string>> {
   try {
     const response = await apiClient<{ data: CreditCard }>(`/credit-cards/${id}/spend`, {
       method: 'POST',
       body: JSON.stringify({ amount }),
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(response.data);
   } catch (error: any) {
@@ -72,7 +78,8 @@ export async function recordSpend(id: string, amount: number): Promise<Result<Cr
 
 export async function recordMidCyclePayment(
   id: string,
-  amount: number
+  amount: number,
+  idempotencyKey?: string
 ): Promise<Result<CreditCard, string>> {
   try {
     const response = await apiClient<{ data: CreditCard }>(
@@ -80,6 +87,7 @@ export async function recordMidCyclePayment(
       {
         method: 'POST',
         body: JSON.stringify({ amount }),
+        headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
       }
     );
     return ok(response.data);
@@ -88,10 +96,11 @@ export async function recordMidCyclePayment(
   }
 }
 
-export async function resetCreditCard(id: string): Promise<Result<CreditCard, string>> {
+export async function resetCreditCard(id: string, idempotencyKey?: string): Promise<Result<CreditCard, string>> {
   try {
     const response = await apiClient<{ data: CreditCard }>(`/credit-cards/${id}/reset`, {
       method: 'POST',
+      headers: idempotencyKey ? { 'X-Idempotency-Key': idempotencyKey } : undefined,
     });
     return ok(response.data);
   } catch (error: any) {

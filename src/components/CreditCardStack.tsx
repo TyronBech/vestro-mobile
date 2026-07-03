@@ -24,6 +24,7 @@ import { CreditCard } from "../types";
 import * as Haptics from "expo-haptics";
 import { useUIStore } from "../store/ui-store";
 import MastercardIcon from "../../assets/svgs/mastercard.svg";
+import VisaIcon from "../../assets/svgs/visa.svg";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
@@ -325,7 +326,11 @@ function StackCard({
                 </Text>
               </View>
             </View>
-            <MastercardIcon width={40} height={25} />
+            {card.cardBrand === "VISA" ? (
+              <VisaIcon width={50} height={16} color={Colors.background} />
+            ) : (
+              <MastercardIcon width={40} height={25} />
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -362,8 +367,17 @@ export function CreditCardStack({ cards, showBalance }: Props) {
 
   const panGesture = useMemo(() => {
     const cardCount = cards.length;
+    const cardWidth = SCREEN_WIDTH - 48;
+    const hitSlopX = -Math.round((cardWidth - 120) / 2);
+    const hitSlopY = -Math.round((210 - 120) / 2);
 
     return Gesture.Pan()
+      .hitSlop({
+        left: hitSlopX,
+        right: hitSlopX,
+        top: hitSlopY,
+        bottom: hitSlopY,
+      })
       .onStart(() => {
         dragDirection.value = 0;
       })

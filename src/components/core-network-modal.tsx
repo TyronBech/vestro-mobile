@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { useToastStore } from "../store/toast-store";
 import { createCoreNetwork, updateCoreNetwork, fetchCoreNetworks, CoreNetwork, CoreNetworkType } from "../services/api/endpoints/core-networks";
 import { fetchMacroAssets, MacroAsset } from "../services/api/endpoints/macro-assets";
 import { Colors } from "../../constants/colors";
+import { generateUUID } from "../utils/uuid";
 
 const CORE_NETWORK_TYPES: CoreNetworkType[] = [
   "PAYCHECK",
@@ -37,6 +38,8 @@ const CORE_NETWORK_TYPES: CoreNetworkType[] = [
 ];
 
 export default function CoreNetworkModal() {
+  const isSubmittingRef = useRef(false);
+  const idempotencyKeyRef = useRef(generateUUID());
   const {
     isCoreNetworkModalOpen,
     closeCoreNetworkModal,
@@ -85,6 +88,7 @@ export default function CoreNetworkModal() {
 
   useEffect(() => {
     if (isCoreNetworkModalOpen) {
+      idempotencyKeyRef.current = generateUUID();
       if (editingCoreNetwork) {
         setName(editingCoreNetwork.name);
         setDescription(editingCoreNetwork.description || "");
@@ -138,15 +142,22 @@ export default function CoreNetworkModal() {
   };
 
   const handleSave = async () => {
-    if (saving) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    if (saving) {
+      isSubmittingRef.current = false;
+      return;
+    }
     if (!selectedMacroAssetId) {
       triggerErrorEffects();
       toastStore.show("Macro Asset selection is required.", "error");
+      isSubmittingRef.current = false;
       return;
     }
     if (!name.trim()) {
       triggerErrorEffects();
       toastStore.show("Name is required.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -154,6 +165,7 @@ export default function CoreNetworkModal() {
     if (isNaN(pct) || pct < 0 || pct > 100) {
       triggerErrorEffects();
       toastStore.show("Percentage must be a number between 0 and 100.", "error");
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -165,6 +177,7 @@ export default function CoreNetworkModal() {
       if (!parentNode) {
         triggerErrorEffects();
         toastStore.show("Selected parent node not found.", "error");
+        isSubmittingRef.current = false;
         return;
       }
       maxAllowed = parentNode.percentage; // Limit is the parent's absolute percentage
@@ -185,6 +198,7 @@ export default function CoreNetworkModal() {
         `Allocation exceeds limit. Max remaining available is ${maxAllowed - allocatedSum}%.`,
         "error"
       );
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -196,7 +210,7 @@ export default function CoreNetworkModal() {
         description: description.trim() || undefined,
         percentage: pct,
         type: selectedType,
-      });
+      }, idempotencyKeyRef.current);
     } else {
       res = await createCoreNetwork({
         macroAssetId: selectedMacroAssetId,
@@ -205,7 +219,7 @@ export default function CoreNetworkModal() {
         description: description.trim() || undefined,
         percentage: pct,
         type: selectedType,
-      });
+      }, idempotencyKeyRef.current);
     }
 
     if (res.ok) {
@@ -219,6 +233,7 @@ export default function CoreNetworkModal() {
       toastStore.show(res.error || "Failed to create core network node", "error");
     }
     setSaving(false);
+    isSubmittingRef.current = false;
   };
 
   const handleClose = () => {
