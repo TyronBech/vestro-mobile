@@ -1,10 +1,12 @@
 import { apiClient } from "../client";
+import { ApiResponse, ProfileResponse } from "../../../types";
 
-export interface ProfileResponse {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-}
+export const fetchProfile = () => apiClient<ApiResponse<ProfileResponse>>("/profile");
 
-export const fetchProfile = () => apiClient<ProfileResponse>("/profile");
+export const apiUpdateProfile = (params: Partial<ProfileResponse>) =>
+  apiClient<ApiResponse<ProfileResponse>>("/profile", {
+    method: "PATCH",
+    body: JSON.stringify(params),
+  });
+
+
