@@ -32,9 +32,17 @@ export default function GoogleAuthCallback() {
       if (token) {
         setDebugInfo(prev => `${prev}\nFound access token. Exchanging token...`);
         loginWithGoogle(token)
-          .then(() => {
-            setDebugInfo(prev => `${prev}\nExchange successful! Redirecting...`);
-            router.replace("/(tabs)/home");
+          .then((result) => {
+            if (result?.requires2fa && result?.user?.id) {
+              setDebugInfo(prev => `${prev}\n2FA verification required. Redirecting...`);
+              router.replace({
+                pathname: "/login",
+                params: { requires2fa: "true", tempUserId: result.user.id }
+              });
+            } else {
+              setDebugInfo(prev => `${prev}\nExchange successful! Redirecting...`);
+              router.replace("/(tabs)/home");
+            }
           })
           .catch((err) => {
             setErrorInfo(`Store login failed: ${err.message || String(err)}`);
@@ -49,9 +57,17 @@ export default function GoogleAuthCallback() {
       if (queryToken) {
         setDebugInfo(prev => `${prev}\nFound token in query params. Exchanging...`);
         loginWithGoogle(queryToken)
-          .then(() => {
-            setDebugInfo(prev => `${prev}\nExchange successful! Redirecting...`);
-            router.replace("/(tabs)/home");
+          .then((result) => {
+            if (result?.requires2fa && result?.user?.id) {
+              setDebugInfo(prev => `${prev}\n2FA verification required. Redirecting...`);
+              router.replace({
+                pathname: "/login",
+                params: { requires2fa: "true", tempUserId: result.user.id }
+              });
+            } else {
+              setDebugInfo(prev => `${prev}\nExchange successful! Redirecting...`);
+              router.replace("/(tabs)/home");
+            }
           })
           .catch((err) => {
             setErrorInfo(`Store login failed (query): ${err.message || String(err)}`);

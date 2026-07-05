@@ -98,9 +98,17 @@ export default function RootLayout() {
         if (token) {
           console.log("[Global Deep Link] Found token, exchanging...");
           try {
-            await useAuthStore.getState().loginWithGoogle(token);
-            console.log("[Global Deep Link] Login successful, routing to home...");
-            router.replace("/(tabs)/home");
+            const result = await useAuthStore.getState().loginWithGoogle(token);
+            if (result?.requires2fa && result?.user?.id) {
+              console.log("[Global Deep Link] 2FA required. Redirecting to login...");
+              router.replace({
+                pathname: "/login",
+                params: { requires2fa: "true", tempUserId: result.user.id }
+              });
+            } else {
+              console.log("[Global Deep Link] Login successful, routing to home...");
+              router.replace("/(tabs)/home");
+            }
           } catch (err) {
             console.error("[Global Deep Link] Token exchange failed:", err);
           }

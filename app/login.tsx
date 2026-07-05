@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import Animated, {
   useSharedValue,
@@ -61,6 +61,7 @@ const { width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { requires2fa: paramRequires2fa, tempUserId: paramTempUserId } = useLocalSearchParams<{ requires2fa?: string; tempUserId?: string }>();
   const { login, loginWithGoogle, loginWith2fa, loading, error, clearError } = useAuthStore();
   const insets = useSafeAreaInsets();
 
@@ -72,6 +73,14 @@ export default function LoginScreen() {
   const [requires2fa, setRequires2fa] = useState<boolean>(false);
   const [twoFactorCode, setTwoFactorCode] = useState<string>("");
   const [tempUserId, setTempUserId] = useState<string>("");
+
+  useEffect(() => {
+    if (paramRequires2fa === "true" && paramTempUserId) {
+      setRequires2fa(true);
+      setTempUserId(paramTempUserId);
+      router.setParams({ requires2fa: undefined, tempUserId: undefined });
+    }
+  }, [paramRequires2fa, paramTempUserId]);
 
   // Reanimated shared value for card shake
   const shakeOffset = useSharedValue(0);

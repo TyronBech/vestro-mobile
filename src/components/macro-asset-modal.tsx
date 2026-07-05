@@ -186,7 +186,7 @@ export default function MacroAssetModal() {
               <TextInput
                 value={bankName}
                 onChangeText={setBankName}
-                placeholder="e.g. BPI, LANDBANK, GCash"
+                placeholder="e.g. BPI"
                 placeholderTextColor={Colors.textMuted}
                 className="border border-border rounded-xl px-4 py-2.5 text-sm font-bold text-textPrimary bg-backgroundLight"
               />
