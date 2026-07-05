@@ -35,6 +35,14 @@ const getDebuggerHost = (): string | null => {
   return null;
 };
 
+const getDebuggerHost = (): string | null => {
+  const debuggerHost = Constants.expoGoConfig?.debuggerHost;
+  if (debuggerHost) {
+    return debuggerHost.split(":")[0] || null;
+  }
+  return null;
+};
+
 const parseScriptHost = (): string | null => {
   const scriptURL = NativeModules?.SourceCode?.scriptURL;
   if (typeof scriptURL !== "string" || !scriptURL) {
