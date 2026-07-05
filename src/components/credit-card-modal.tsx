@@ -252,9 +252,6 @@ export default function CreditCardModal() {
     }, idempotencyKeyRef.current);
 
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {},
-      );
       toastStore.show("Credit Card added successfully!", "success");
       triggerNetworkUpdate();
       resetForm();
@@ -323,9 +320,6 @@ export default function CreditCardModal() {
     }, idempotencyKeyRef.current);
 
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {},
-      );
       toastStore.show("Credit Card updated successfully!", "success");
       triggerNetworkUpdate();
       loadData(); // reload
@@ -350,9 +344,6 @@ export default function CreditCardModal() {
     const res = await deleteCreditCard(selectedCard.id, idempotencyKeyRef.current);
 
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {},
-      );
       toastStore.show("Credit Card deleted successfully!", "success");
       triggerNetworkUpdate();
 
@@ -410,9 +401,6 @@ export default function CreditCardModal() {
     const res = await recordSpend(selectedCard.id, spendCents, idempotencyKeyRef.current);
 
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {},
-      );
 
       let toastMsg = "Spend recorded successfully!";
       let toastType: "success" | "warning" = "success";
@@ -474,9 +462,6 @@ export default function CreditCardModal() {
     const res = await recordMidCyclePayment(selectedCard.id, payCents, idempotencyKeyRef.current);
 
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {},
-      );
       toastStore.show("Payment recorded successfully!", "success");
       setPaymentAmountPesos("");
       triggerNetworkUpdate();
@@ -507,9 +492,6 @@ export default function CreditCardModal() {
     setSaving(true);
     const res = await resetCreditCard(selectedCard.id, idempotencyKeyRef.current);
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {},
-      );
       toastStore.show("Billing cycle reset successfully!", "success");
       setShowResetConfirm(false);
       triggerNetworkUpdate();
@@ -758,10 +740,7 @@ export default function CreditCardModal() {
                           return (
                             <TouchableOpacity
                               key={brand}
-                              onPress={async () => {
-                                try {
-                                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                } catch (e) {}
+                              onPress={() => {
                                 setCardBrand(brand);
                               }}
                               className={`flex-1 items-center justify-center border rounded-xl py-2.5 ${

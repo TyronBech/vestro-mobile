@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import Animated, {
   useSharedValue,
@@ -61,6 +61,7 @@ const { width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { requires2fa: paramRequires2fa, tempUserId: paramTempUserId } = useLocalSearchParams<{ requires2fa?: string; tempUserId?: string }>();
   const { login, loginWithGoogle, loginWith2fa, loading, error, clearError } = useAuthStore();
   const insets = useSafeAreaInsets();
 
@@ -72,6 +73,14 @@ export default function LoginScreen() {
   const [requires2fa, setRequires2fa] = useState<boolean>(false);
   const [twoFactorCode, setTwoFactorCode] = useState<string>("");
   const [tempUserId, setTempUserId] = useState<string>("");
+
+  useEffect(() => {
+    if (paramRequires2fa === "true" && paramTempUserId) {
+      setRequires2fa(true);
+      setTempUserId(paramTempUserId);
+      router.setParams({ requires2fa: undefined, tempUserId: undefined });
+    }
+  }, [paramRequires2fa, paramTempUserId]);
 
   // Reanimated shared value for card shake
   const shakeOffset = useSharedValue(0);
@@ -174,9 +183,6 @@ export default function LoginScreen() {
     if (rateLimitTimeLeft > 0) return;
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
 
     if (requires2fa) {
       if (twoFactorCode.length !== 6) {
@@ -187,9 +193,6 @@ export default function LoginScreen() {
       }
       try {
         await loginWith2fa({ userId: tempUserId, token: twoFactorCode });
-        try {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-        } catch (e) {}
       } catch (err: any) {
         triggerErrorEffects();
       } finally {
@@ -211,10 +214,6 @@ export default function LoginScreen() {
         setTempUserId(result.user.id);
         setRequires2fa(true);
         setTwoFactorCode("");
-      } else {
-        try {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-        } catch (e) {}
       }
     } catch (err: any) {
       if (err.status === 429) {
@@ -237,9 +236,6 @@ export default function LoginScreen() {
     if (rateLimitTimeLeft > 0) return;
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
 
     try {
       const redirectUrl = Linking.createURL("google-auth");
@@ -287,10 +283,6 @@ export default function LoginScreen() {
           setTempUserId(googleLoginResult.user.id);
           setRequires2fa(true);
           setTwoFactorCode("");
-        } else {
-          try {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-          } catch (e) {}
         }
       } else if (result.type === "cancel") {
         // Flow cancelled by user
@@ -317,17 +309,11 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
     clearError();
     router.push("/forgot-password");
   };
 
   const handleBack = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
     clearError();
     router.back();
   };
@@ -544,9 +530,6 @@ export default function LoginScreen() {
                 {/* Register Link */}
                 <TouchableOpacity
                   onPress={() => {
-                    try {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-                    } catch (e) {}
                     clearError();
                     router.push("/register");
                   }}

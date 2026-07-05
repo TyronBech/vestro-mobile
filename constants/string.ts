@@ -6,7 +6,7 @@
 export const Strings = {
   // App info / Developer metadata
   designerCredit: "DESIGN BY TYRON BECHAYDA",
-  engineVersion: "POVERTY FIREWALL V1.0.0",
+  engineVersion: "POVERTY FIREWALL V1.0.1",
   pageIndicator: "11 / 12",
   languageCode: "EN",
   

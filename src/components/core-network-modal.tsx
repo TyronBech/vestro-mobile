@@ -223,7 +223,6 @@ export default function CoreNetworkModal() {
     }
 
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       toastStore.show("Core Network Node created successfully!", "success");
       triggerNetworkUpdate();
       resetForm();

@@ -104,13 +104,7 @@ export default function NetworkScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
-    try {
       await loadData(false);
-      try {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (e) {}
     } catch (err) {
       console.error("Network screen refresh failed:", err);
       try {
@@ -121,10 +115,7 @@ export default function NetworkScreen() {
     }
   };
 
-  const handleOpenAddModal = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {}
+  const handleOpenAddModal = () => {
     openCoreNetworkModal();
   };
 
@@ -143,10 +134,7 @@ export default function NetworkScreen() {
     }
   };
 
-  const handleEditNode = async (node: CoreNetwork) => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
+  const handleEditNode = (node: CoreNetwork) => {
     openCoreNetworkModal(node);
   };
 

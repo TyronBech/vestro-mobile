@@ -358,9 +358,6 @@ export function CreditCardStack({ cards, showBalance }: Props) {
   }, [cards.length]);
 
   const onPressCard = (card: CreditCard) => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
     // Open in edit mode
     useUIStore.getState().openCreditCardModal(card);
   };
@@ -418,8 +415,6 @@ export function CreditCardStack({ cards, showBalance }: Props) {
         dragDirection.value = 0;
 
         if (isSwipedLeft || isSwipedRight || isSwipedUp || isSwipedDown) {
-          runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
-
           const outX = isSwipedLeft
             ? -SCREEN_WIDTH * 1.5
             : isSwipedRight

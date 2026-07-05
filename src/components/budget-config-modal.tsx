@@ -101,7 +101,6 @@ export default function BudgetConfigModal() {
     );
 
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       toastStore.show("Budget configuration updated successfully!", "success");
       triggerBudgetUpdate();
       closeBudgetModal();

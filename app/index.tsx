@@ -34,20 +34,10 @@ export default function LandingScreen() {
   const sheetTranslateY = useSharedValue<number>(Sizes.sheetTranslateYClosed);
 
   const handleEnter = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {
-      console.log("Haptics ignored:", e);
-    }
     router.push("/login");
   };
 
   const toggleInfoSheet = () => {
-    try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (e) {
-      console.log("Haptics ignored:", e);
-    }
     
     if (isSheetOpen.value) {
       sheetTranslateY.value = withTiming(Sizes.sheetTranslateYClosed, { duration: 350 });
