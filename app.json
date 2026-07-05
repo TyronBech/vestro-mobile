@@ -3,7 +3,7 @@
     "name": "Vestro",
     "slug": "vestro",
     "scheme": "vestro",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -24,7 +24,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
@@ -33,6 +34,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.vestro",
+      "versionCode": 2,
       "googleServicesFile": "./google-services.json",
       "navigationBar": {
         "barStyle": "dark-content",

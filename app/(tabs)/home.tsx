@@ -109,9 +109,6 @@ export default function HomeTabScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
-    try {
       if (useAuthStore.getState().isAuthenticated) {
         await refreshProfile();
         await loadUnreadCount();
@@ -128,9 +125,6 @@ export default function HomeTabScreen() {
           setCashFlows(flowsRes.value);
         }
       }
-      try {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (e) {}
     } catch (err) {
       console.error("Home screen refresh failed:", err);
       try {
@@ -150,12 +144,7 @@ export default function HomeTabScreen() {
   const displayAssets = macroAssets;
   const displayCashFlows = cashFlows.slice(0, 5);
 
-  const toggleBalanceVisibility = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {
-      console.log("Haptics ignored:", e);
-    }
+  const toggleBalanceVisibility = () => {
     setShowBalance(!showBalance);
   };
 
@@ -200,10 +189,7 @@ export default function HomeTabScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            onPress={async () => {
-              try {
-                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              } catch (e) {}
+            onPress={() => {
               openNotificationModal();
             }}
             className="w-10 h-10 rounded-full border border-borderLight bg-background items-center justify-center relative"
@@ -270,10 +256,7 @@ export default function HomeTabScreen() {
               </View>
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={async () => {
-                  try {
-                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  } catch (e) {}
+                onPress={() => {
                   setNetWorthCardBrand(prev => prev === 'VISA' ? 'MASTERCARD' : 'VISA');
                 }}
               >

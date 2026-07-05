@@ -150,7 +150,6 @@ export default function MacroAssetModal() {
     }, idempotencyKeyRef.current);
 
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       toastStore.show("Macro Asset added successfully!", "success");
       triggerNetworkUpdate();
       resetForm();
@@ -186,7 +185,7 @@ export default function MacroAssetModal() {
               <TextInput
                 value={bankName}
                 onChangeText={setBankName}
-                placeholder="e.g. BPI, LANDBANK, GCash"
+                placeholder="e.g. BPI"
                 placeholderTextColor={Colors.textMuted}
                 className="border border-border rounded-xl px-4 py-2.5 text-sm font-bold text-textPrimary bg-backgroundLight"
               />
@@ -201,10 +200,7 @@ export default function MacroAssetModal() {
                   return (
                     <TouchableOpacity
                       key={brand}
-                      onPress={async () => {
-                        try {
-                          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        } catch (e) {}
+                      onPress={() => {
                         setCardBrand(brand);
                       }}
                       className={`flex-1 items-center justify-center border rounded-xl py-2.5 ${

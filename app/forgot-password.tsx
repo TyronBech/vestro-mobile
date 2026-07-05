@@ -81,9 +81,6 @@ export default function ForgotPasswordScreen() {
   const handleRequestOtp = async () => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
 
     if (!email.trim()) {
       useAuthStore.setState({ error: "Please enter your email address." });
@@ -94,9 +91,6 @@ export default function ForgotPasswordScreen() {
 
     try {
       await forgotPassword(email.trim());
-      try {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      } catch (e) {}
       
       Alert.alert(
         "OTP Code Sent",
@@ -121,9 +115,6 @@ export default function ForgotPasswordScreen() {
   const handleResetPassword = async () => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
 
     if (!otp.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       useAuthStore.setState({ error: "All fields are required." });
@@ -155,9 +146,6 @@ export default function ForgotPasswordScreen() {
 
     try {
       await resetPassword(email.trim(), otp.trim(), newPassword.trim());
-      try {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      } catch (e) {}
 
       Alert.alert(
         "Success",
@@ -180,9 +168,6 @@ export default function ForgotPasswordScreen() {
   };
 
   const handleBack = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
     clearError();
     if (phase === 2) {
       setPhase(1);

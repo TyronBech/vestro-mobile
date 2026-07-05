@@ -132,7 +132,6 @@ export default function CashFlowModal() {
     }, idempotencyKeyRef.current);
 
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       toastStore.show(
         `Logged ${type === "INFLOW" ? "inflow" : "outflow"} & updated network!`,
         "success"

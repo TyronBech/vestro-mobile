@@ -100,9 +100,6 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
 
     // Validation checks
     if (!name.trim()) {
@@ -140,9 +137,6 @@ export default function RegisterScreen() {
         password: password,
       });
       
-      try {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      } catch (e) {}
     } catch (err: any) {
       triggerErrorEffects();
     } finally {
@@ -151,17 +145,11 @@ export default function RegisterScreen() {
   };
 
   const handleBackToLogin = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
     clearError();
     router.replace("/login");
   };
 
   const handleBack = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
     clearError();
     router.back();
   };

@@ -148,7 +148,6 @@ export default function SweepModal() {
     }, idempotencyKeyRef.current);
 
     if (res.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       toastStore.show("Sweep logged and balances updated!", "success");
       triggerBudgetUpdate();
       triggerNetworkUpdate();

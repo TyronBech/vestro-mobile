@@ -163,9 +163,6 @@ export default function SessionLockScreen() {
         setLoading(true);
         try {
           await biometricUnlock();
-          try {
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } catch (e) {}
           toast.show("Welcome back!", "success");
         } catch (err: any) {
           console.error("Biometric unlock store error:", err);
@@ -244,9 +241,6 @@ export default function SessionLockScreen() {
             isAuthenticated: true,
             isSessionLocked: false,
           });
-          try {
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } catch (e) {}
           toast.show("Unlocked successfully!", "success");
         } else {
           throw new Error("Invalid code");
@@ -284,9 +278,6 @@ export default function SessionLockScreen() {
             isAuthenticated: true,
             isSessionLocked: false,
           });
-          try {
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } catch (e) {}
           toast.show("Welcome back!", "success");
         }
       }
@@ -311,9 +302,6 @@ export default function SessionLockScreen() {
   };
 
   const handleLogout = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {}
     await logout();
     setPassword("");
     setTwoFactorCode("");
