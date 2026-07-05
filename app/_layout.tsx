@@ -8,6 +8,7 @@ import * as Linking from "expo-linking";
 import { useAuthStore } from "../src/store/auth-store";
 import { Colors } from "../constants/colors";
 import { usePushNotifications } from "../src/hooks/usePushNotifications";
+import { useShakeToLock } from "../src/hooks/useShakeToLock";
 import Toast from "../src/components/toast";
 import BudgetConfigModal from "../src/components/budget-config-modal";
 import MacroAssetModal from "../src/components/macro-asset-modal";
@@ -67,6 +68,9 @@ export default function RootLayout() {
 
   // Initialize push notification listener & token register
   usePushNotifications();
+
+  // Register shake-to-lock panic listener
+  useShakeToLock();
 
   useEffect(() => {
     // 1. Initialize auth session
