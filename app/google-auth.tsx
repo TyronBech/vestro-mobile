@@ -1,16 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, View, Text, ScrollView } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import { ActivityIndicator, View, Text } from "react-native";
 import { useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import { useAuthStore } from "../src/store/auth-store";
+import { useToastStore } from "../src/store/toast-store";
 import { Colors } from "../constants/colors";
 
 export default function GoogleAuthCallback() {
   const url = Linking.useURL();
   const router = useRouter();
   const { loginWithGoogle } = useAuthStore();
+  const toast = useToastStore();
   const [debugInfo, setDebugInfo] = useState<string>("Initializing callback...");
   const [errorInfo, setErrorInfo] = useState<string>("");
+
+  const handleAuthFailure = useCallback((errorMsg: string) => {
+    toast.show(errorMsg, "error");
+    router.replace("/login");
+  }, [router, toast]);
 
   useEffect(() => {
     const handleUrl = (incomingUrl: string) => {
@@ -47,6 +54,7 @@ export default function GoogleAuthCallback() {
           .catch((err) => {
             setErrorInfo(`Store login failed: ${err.message || String(err)}`);
             setDebugInfo(prev => `${prev}\nExchange failed.`);
+            handleAuthFailure(err.message || "Google authentication failed.");
           });
         return;
       }
@@ -72,11 +80,13 @@ export default function GoogleAuthCallback() {
           .catch((err) => {
             setErrorInfo(`Store login failed (query): ${err.message || String(err)}`);
             setDebugInfo(prev => `${prev}\nExchange failed.`);
+            handleAuthFailure(err.message || "Google authentication failed.");
           });
         return;
       }
 
       setDebugInfo(prev => `${prev}\nNo access_token found in URL hash or query params.`);
+      handleAuthFailure("Authentication token not found in response.");
     };
 
     if (url) {
@@ -89,10 +99,18 @@ export default function GoogleAuthCallback() {
       handleUrl(event.url);
     });
 
+    // Fallback timeout: if no redirect URL is received after 10 seconds, return to login
+    const timeoutId = setTimeout(() => {
+      if (!url) {
+        handleAuthFailure("Google authentication timed out.");
+      }
+    }, 10000);
+
     return () => {
       subscription.remove();
+      clearTimeout(timeoutId);
     };
-  }, [url]);
+  }, [url, handleAuthFailure, loginWithGoogle]);
 
   return (
     <View 
