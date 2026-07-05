@@ -267,7 +267,7 @@ export default function AnalyticsScreen() {
             <TextInput
               value={inputSalary}
               onChangeText={setInputSalary}
-              placeholder="Enter base monthly salary"
+              placeholder="Enter monthly net salary"
               keyboardType="numeric"
               placeholderTextColor={Colors.textMuted}
               className="flex-1 text-sm font-bold text-textPrimary p-0"
