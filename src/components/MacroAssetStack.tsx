@@ -344,8 +344,6 @@ export function MacroAssetStack({ assets, showBalance }: Props) {
         dragDirection.value = 0;
 
         if (isSwipedLeft || isSwipedRight || isSwipedUp || isSwipedDown) {
-          runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
-
           // Continue in the swipe direction until off-screen
           const outX = isSwipedLeft
             ? -SCREEN_WIDTH * 1.5

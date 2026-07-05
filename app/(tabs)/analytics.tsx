@@ -78,13 +78,7 @@ export default function AnalyticsScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
-    try {
       await loadData(false);
-      try {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (e) {}
     } catch (err) {
       console.error("Analytics screen refresh failed:", err);
       try {
@@ -127,7 +121,6 @@ export default function AnalyticsScreen() {
     );
 
     if (result.ok) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       toastStore.show("Salary updated successfully!", "success");
       const refreshed = await fetchAnalyticsData();
       if (refreshed.ok) {

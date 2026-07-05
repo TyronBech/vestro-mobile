@@ -52,7 +52,6 @@ export default function NotificationModal() {
 
   const handleMarkRead = async (id: string) => {
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const res = await markNotificationAsRead(id);
       if (res.ok) {
         setNotifications((prev) =>
@@ -66,7 +65,6 @@ export default function NotificationModal() {
 
   const handleMarkAllRead = async () => {
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const res = await markAllNotificationsAsRead();
       if (res.ok) {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -79,7 +77,6 @@ export default function NotificationModal() {
 
   const triggerDevTest = async (type?: string) => {
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       const res = await testTriggerNotification(type);
       if (res.ok) {
         showToast(res.value.message || "Test triggered successfully!", "success");

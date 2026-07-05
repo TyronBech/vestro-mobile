@@ -14,14 +14,10 @@ export default function Toast() {
   useEffect(() => {
     if (isVisible) {
       // Trigger corresponding haptics when shown
-      if (type === "success") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      } else if (type === "error") {
+      if (type === "error") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       } else if (type === "warning") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-      } else if (type === "info") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       }
     }
   }, [isVisible, type]);

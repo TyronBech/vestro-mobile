@@ -99,13 +99,7 @@ export default function ProfileScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
-    try {
       await refreshProfile();
-      try {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (e) {}
     } catch (err) {
       console.error("Profile screen refresh failed:", err);
       try {
@@ -154,9 +148,6 @@ export default function ProfileScreen() {
 
       await refreshProfile();
       setIsEditModalOpen(false);
-      try {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (e) {}
       toast.show("Profile updated!", "success");
     } catch (err: any) {
       console.error("Failed to update profile", err);
@@ -169,9 +160,6 @@ export default function ProfileScreen() {
 
   // Toggle biometric status
   const handleBiometricToggle = async (value: boolean) => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {}
 
     if (!value) {
       // Disabling Biometrics
@@ -227,9 +215,6 @@ export default function ProfileScreen() {
 
   // Toggle 2FA status
   const handle2faToggle = async (value: boolean) => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {}
 
     if (!value) {
       // Disable 2FA
@@ -276,9 +261,6 @@ export default function ProfileScreen() {
 
       await refreshProfile();
       setIs2faModalOpen(false);
-      try {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (e) {}
       toast.show("2FA Shield active!", "success");
     } catch (err: any) {
       toast.show(err.message || "Invalid verification code", "error");
@@ -290,9 +272,6 @@ export default function ProfileScreen() {
 
   const handleCopySecret = () => {
     Clipboard.setString(totpSecret);
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
     toast.show("Secret key copied to clipboard", "success");
   };
 
@@ -314,9 +293,6 @@ export default function ProfileScreen() {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const pickedUri = result.assets[0].uri;
         setUploadingAvatar(true);
-        try {
-          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        } catch (e) {}
         
         // 1. Upload to Supabase Storage
         const uploadedUrl = await uploadImageToSupabase(pickedUri);
@@ -327,9 +303,6 @@ export default function ProfileScreen() {
         // 3. Refresh profile state
         await refreshProfile();
         
-        try {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } catch (e) {}
         toast.show("Avatar updated successfully!", "success");
       }
     } catch (error: any) {
@@ -344,9 +317,6 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {}
     await logout();
     toast.show("Logged out securely", "info");
   };

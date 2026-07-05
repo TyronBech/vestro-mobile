@@ -75,72 +75,36 @@ export default function CustomTabBar({
     });
   }, [isOpen]);
 
-  const toggleMenu = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {
-      console.log("Haptics ignored:", e);
-    }
+  const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleBudgetConfigPress = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {
-      console.log("Haptics ignored:", e);
-    }
+  const handleBudgetConfigPress = () => {
     setIsOpen(false);
     useUIStore.getState().openBudgetModal();
   };
 
-  const handleMacroAssetPress = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {
-      console.log("Haptics ignored:", e);
-    }
+  const handleMacroAssetPress = () => {
     setIsOpen(false);
     useUIStore.getState().openMacroAssetModal();
   };
 
-  const handleCoreNetworkPress = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {
-      console.log("Haptics ignored:", e);
-    }
+  const handleCoreNetworkPress = () => {
     setIsOpen(false);
     useUIStore.getState().openCoreNetworkModal();
   };
 
-  const handleSweepPress = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {
-      console.log("Haptics ignored:", e);
-    }
+  const handleSweepPress = () => {
     setIsOpen(false);
     useUIStore.getState().openSweepModal();
   };
 
-  const handleCashFlowPress = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {
-      console.log("Haptics ignored:", e);
-    }
+  const handleCashFlowPress = () => {
     setIsOpen(false);
     useUIStore.getState().openCashFlowModal();
   };
 
-  const handleCreditCardPress = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {
-      console.log("Haptics ignored:", e);
-    }
-
+  const handleCreditCardPress = () => {
     // Close the bubble menu first to maintain clean transitions
     setIsOpen(false);
 
@@ -428,7 +392,7 @@ export default function CustomTabBar({
           const { options } = descriptors[route.key]!;
           const isFocused = state.index === index;
 
-          const onPress = async () => {
+          const onPress = () => {
             const event = navigation.emit({
               type: "tabPress",
               target: route.key,
@@ -445,11 +409,6 @@ export default function CustomTabBar({
             }
 
             if (!isFocused && !event.defaultPrevented) {
-              try {
-                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              } catch (e) {
-                console.log("Haptics ignored:", e);
-              }
               navigation.navigate(route.name, route.params);
             }
           };

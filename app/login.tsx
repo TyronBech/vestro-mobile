@@ -183,9 +183,6 @@ export default function LoginScreen() {
     if (rateLimitTimeLeft > 0) return;
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
 
     if (requires2fa) {
       if (twoFactorCode.length !== 6) {
@@ -196,9 +193,6 @@ export default function LoginScreen() {
       }
       try {
         await loginWith2fa({ userId: tempUserId, token: twoFactorCode });
-        try {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-        } catch (e) {}
       } catch (err: any) {
         triggerErrorEffects();
       } finally {
@@ -220,10 +214,6 @@ export default function LoginScreen() {
         setTempUserId(result.user.id);
         setRequires2fa(true);
         setTwoFactorCode("");
-      } else {
-        try {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-        } catch (e) {}
       }
     } catch (err: any) {
       if (err.status === 429) {
@@ -246,9 +236,6 @@ export default function LoginScreen() {
     if (rateLimitTimeLeft > 0) return;
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
 
     try {
       const redirectUrl = Linking.createURL("google-auth");
@@ -296,10 +283,6 @@ export default function LoginScreen() {
           setTempUserId(googleLoginResult.user.id);
           setRequires2fa(true);
           setTwoFactorCode("");
-        } else {
-          try {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-          } catch (e) {}
         }
       } else if (result.type === "cancel") {
         // Flow cancelled by user
@@ -326,17 +309,11 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
     clearError();
     router.push("/forgot-password");
   };
 
   const handleBack = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } catch (e) {}
     clearError();
     router.back();
   };
@@ -553,9 +530,6 @@ export default function LoginScreen() {
                 {/* Register Link */}
                 <TouchableOpacity
                   onPress={() => {
-                    try {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-                    } catch (e) {}
                     clearError();
                     router.push("/register");
                   }}
