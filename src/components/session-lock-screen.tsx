@@ -11,6 +11,7 @@ import { Colors } from "../../constants/colors";
 import { Sizes } from "../../constants/sizes";
 import * as SecureStore from "expo-secure-store";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
+import StartEngineCard from "./start-engine-card";
 
 export default function SessionLockScreen() {
   const { user, logout, biometricUnlock } = useAuthStore();
@@ -363,7 +364,7 @@ export default function SessionLockScreen() {
               disabled={loading}
               className="w-full flex-row items-center justify-center border border-borderLight rounded-2xl py-4 bg-backgroundLight mb-4"
             >
-              <Fingerprint size={Sizes.iconMedium} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-2" />
+              <Fingerprint size={Sizes.iconMedium} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-4" />
               <Text className="text-textPrimary font-bold text-xs uppercase tracking-wider">
                 Scan Biometrics
               </Text>
@@ -437,12 +438,14 @@ export default function SessionLockScreen() {
           </View>
         </Animated.View>
 
+        <StartEngineCard />
+
         {/* Disconnect Option */}
         <TouchableOpacity
           onPress={handleLogout}
           className="flex-row items-center mt-8 border border-borderLight rounded-2xl px-6 py-3 bg-background"
         >
-          <LogOut size={Sizes.iconXSmall} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-2" />
+          <LogOut size={Sizes.iconXSmall} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-4" />
           <Text className="text-actionPrimary font-bold text-xs uppercase tracking-wider">
             Disconnect Session
           </Text>
