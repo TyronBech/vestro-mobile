@@ -208,60 +208,62 @@ export default function NotificationModal() {
         )}
 
         {/* Collapsible Developer Panel */}
-        <View className="border-t border-gray-100 mt-4 pt-3">
-          <TouchableOpacity
-            onPress={() => setDevToolsOpen(!devToolsOpen)}
-            className="flex-row justify-between items-center py-2"
-          >
-            <View className="flex-row items-center">
-              <Code size={Sizes.iconExtraSmall} color={Colors.textIconMuted} />
-              <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">
-                Developer Simulation
-              </Text>
-            </View>
-            <Text className="text-xs text-gray-400">{devToolsOpen ? "Hide" : "Show"}</Text>
-          </TouchableOpacity>
-
-          {devToolsOpen && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="flex-row mt-2 py-1"
+        {__DEV__ && (
+          <View className="border-t border-gray-100 mt-4 pt-3">
+            <TouchableOpacity
+              onPress={() => setDevToolsOpen(!devToolsOpen)}
+              className="flex-row justify-between items-center py-2"
             >
-              <TouchableOpacity
-                onPress={() => triggerDevTest("TEST")}
-                className="bg-gray-800 px-3 py-2 rounded-2xl mr-2 flex-row items-center"
-              >
-                <Sparkles size={Sizes.iconSuperTiny} color={Colors.white} />
-                <Text className="text-white text-xs font-bold ml-1.5">Direct Push</Text>
-              </TouchableOpacity>
+              <View className="flex-row items-center">
+                <Code size={Sizes.iconExtraSmall} color={Colors.textIconMuted} />
+                <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">
+                  Developer Simulation
+                </Text>
+              </View>
+              <Text className="text-xs text-gray-400">{devToolsOpen ? "Hide" : "Show"}</Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => triggerDevTest("CREDIT_DUE")}
-                className="bg-gray-800 px-3 py-2 rounded-2xl mr-2 flex-row items-center"
+            {devToolsOpen && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="flex-row mt-2 py-1"
               >
-                <ShieldAlert size={Sizes.iconSuperTiny} color={Colors.white} />
-                <Text className="text-white text-xs font-bold ml-1.5">Credit Due</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => triggerDevTest("TEST")}
+                  className="bg-gray-800 px-3 py-2 rounded-2xl mr-2 flex-row items-center"
+                >
+                  <Sparkles size={Sizes.iconSuperTiny} color={Colors.white} />
+                  <Text className="text-white text-xs font-bold ml-1.5">Direct Push</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => triggerDevTest("WANTS_SWEEP")}
-                className="bg-gray-800 px-3 py-2 rounded-2xl mr-2 flex-row items-center"
-              >
-                <PlusCircle size={Sizes.iconSuperTiny} color={Colors.white} />
-                <Text className="text-white text-xs font-bold ml-1.5">Sweep Warning</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => triggerDevTest("CREDIT_DUE")}
+                  className="bg-gray-800 px-3 py-2 rounded-2xl mr-2 flex-row items-center"
+                >
+                  <ShieldAlert size={Sizes.iconSuperTiny} color={Colors.white} />
+                  <Text className="text-white text-xs font-bold ml-1.5">Credit Due</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => triggerDevTest("CASH_FLOW")}
-                className="bg-gray-800 px-3 py-2 rounded-2xl mr-2 flex-row items-center"
-              >
-                <HelpCircle size={Sizes.iconSuperTiny} color={Colors.white} />
-                <Text className="text-white text-xs font-bold ml-1.5">Flow Reminder</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          )}
-        </View>
+                <TouchableOpacity
+                  onPress={() => triggerDevTest("WANTS_SWEEP")}
+                  className="bg-gray-800 px-3 py-2 rounded-2xl mr-2 flex-row items-center"
+                >
+                  <PlusCircle size={Sizes.iconSuperTiny} color={Colors.white} />
+                  <Text className="text-white text-xs font-bold ml-1.5">Sweep Warning</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => triggerDevTest("CASH_FLOW")}
+                  className="bg-gray-800 px-3 py-2 rounded-2xl mr-2 flex-row items-center"
+                >
+                  <HelpCircle size={Sizes.iconSuperTiny} color={Colors.white} />
+                  <Text className="text-white text-xs font-bold ml-1.5">Flow Reminder</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            )}
+          </View>
+        )}
       </View>
     </FlatModal>
   );
