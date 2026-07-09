@@ -364,7 +364,7 @@ export default function SessionLockScreen() {
               disabled={loading}
               className="w-full flex-row items-center justify-center border border-borderLight rounded-2xl py-4 bg-backgroundLight mb-4"
             >
-              <Fingerprint size={Sizes.iconMedium} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-4" />
+              <Fingerprint size={Sizes.iconMedium} color={Colors.actionPrimary} strokeWidth={2.5} style={{ marginRight: 6 }} />
               <Text className="text-textPrimary font-bold text-xs uppercase tracking-wider">
                 Scan Biometrics
               </Text>
@@ -445,7 +445,7 @@ export default function SessionLockScreen() {
           onPress={handleLogout}
           className="flex-row items-center mt-8 border border-borderLight rounded-2xl px-6 py-3 bg-background"
         >
-          <LogOut size={Sizes.iconXSmall} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-4" />
+          <LogOut size={Sizes.iconXSmall} color={Colors.actionPrimary} strokeWidth={2.5} style={{ marginRight: 6 }} />
           <Text className="text-actionPrimary font-bold text-xs uppercase tracking-wider">
             Disconnect Session
           </Text>
