@@ -12,7 +12,9 @@ import VisaIcon from '../../assets/svgs/visa.svg';
 import MastercardIcon from '../../assets/svgs/mastercard.svg';
 
 import * as Haptics from "expo-haptics";
+import * as SecureStore from "expo-secure-store";
 import { useAuthStore } from "../../src/store/auth-store";
+import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../../src/services/api/config";
 import { fetchProfile } from "../../src/services/api/endpoints/profile";
 import { apiClient } from "../../src/services/api/client";
 import { Colors } from "../../constants/colors";
@@ -45,6 +47,32 @@ export default function HomeTabScreen() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [netWorthCardBrand, setNetWorthCardBrand] = useState<'VISA' | 'MASTERCARD'>('VISA');
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+
+  // Load stored showBalance and netWorthCardBrand preferences on mount
+  useEffect(() => {
+    const loadStoredPreferences = async () => {
+      try {
+        const storedShowBalance = await SecureStore.getItemAsync(
+          SECURE_STORE_KEYS.SHOW_BALANCE,
+          SECURE_STORE_OPTIONS
+        );
+        if (storedShowBalance !== null) {
+          setShowBalance(storedShowBalance === "true");
+        }
+
+        const storedBrand = await SecureStore.getItemAsync(
+          SECURE_STORE_KEYS.NET_WORTH_CARD_BRAND,
+          SECURE_STORE_OPTIONS
+        );
+        if (storedBrand === "VISA" || storedBrand === "MASTERCARD") {
+          setNetWorthCardBrand(storedBrand);
+        }
+      } catch (err) {
+        console.error("Failed to load stored preferences:", err);
+      }
+    };
+    loadStoredPreferences();
+  }, []);
 
   const networkUpdateTrigger = useUIStore((state) => state.networkUpdateTrigger);
   const budgetUpdateTrigger = useUIStore((state) => state.budgetUpdateTrigger);
@@ -144,8 +172,32 @@ export default function HomeTabScreen() {
   const displayAssets = macroAssets;
   const displayCashFlows = cashFlows.slice(0, 5);
 
-  const toggleBalanceVisibility = () => {
-    setShowBalance(!showBalance);
+  const toggleBalanceVisibility = async () => {
+    const nextVal = !showBalance;
+    setShowBalance(nextVal);
+    try {
+      await SecureStore.setItemAsync(
+        SECURE_STORE_KEYS.SHOW_BALANCE,
+        String(nextVal),
+        SECURE_STORE_OPTIONS
+      );
+    } catch (err) {
+      console.error("Failed to store showBalance preference:", err);
+    }
+  };
+
+  const toggleCardBrand = async () => {
+    const nextVal = netWorthCardBrand === "VISA" ? "MASTERCARD" : "VISA";
+    setNetWorthCardBrand(nextVal);
+    try {
+      await SecureStore.setItemAsync(
+        SECURE_STORE_KEYS.NET_WORTH_CARD_BRAND,
+        nextVal,
+        SECURE_STORE_OPTIONS
+      );
+    } catch (err) {
+      console.error("Failed to store netWorthCardBrand preference:", err);
+    }
   };
 
   const formatCurrency = (amountInCents: number, currencyCode?: string | null) => {
@@ -256,9 +308,7 @@ export default function HomeTabScreen() {
               </View>
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => {
-                  setNetWorthCardBrand(prev => prev === 'VISA' ? 'MASTERCARD' : 'VISA');
-                }}
+                onPress={toggleCardBrand}
               >
                 {netWorthCardBrand === 'VISA' ? (
                   <VisaIcon width={50} height={16} color={Colors.background} />

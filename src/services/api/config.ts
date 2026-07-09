@@ -9,6 +9,8 @@ export const SECURE_STORE_KEYS = {
   BIOMETRIC_KEY: `${APP_SLUG}_biometric_key`,
   USER_PROFILE: `${APP_SLUG}_user_profile`,
   RATE_LIMIT_EXPIRES_AT: `${APP_SLUG}_rate_limit_expires_at`,
+  SHOW_BALANCE: `${APP_SLUG}_show_balance`,
+  NET_WORTH_CARD_BRAND: `${APP_SLUG}_net_worth_card_brand`,
 } as const;
 
 

@@ -29,6 +29,7 @@ import { useAuthStore } from "../src/store/auth-store";
 import { APP_NAME, SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../src/services/api/config";
 import { supabase } from "../src/services/supabase";
 import Card from "../src/components/card";
+import StartEngineCard from "../src/components/start-engine-card";
 import { Colors } from "../constants/colors";
 import { Strings } from "../constants/string";
 import { Sizes } from "../constants/sizes";
@@ -594,6 +595,7 @@ export default function LoginScreen() {
               </>
             )}
           </Card>
+          <StartEngineCard style={{ width: Sizes.cardWidthLogin }} />
         </View>
 
         {/* 3. BOTTOM FOOTER */}

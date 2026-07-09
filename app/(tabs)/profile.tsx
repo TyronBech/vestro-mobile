@@ -633,7 +633,7 @@ export default function ProfileScreen() {
             <Animated.View style={[styles.modalContent, twoFactorAnimatedStyle]} className="bg-background border-t border-borderLight rounded-t-3xl p-6 pb-12">
               <View className="flex-row items-center justify-between mb-6">
                 <View className="flex-row items-center">
-                  <ShieldIcon size={Sizes.iconMedium} color={Colors.actionPrimary} strokeWidth={2.5} className="mr-2" />
+                  <ShieldIcon size={Sizes.iconMedium} color={Colors.actionPrimary} strokeWidth={2.5} style={{ marginRight: 4 }} />
                   <Text className="text-textPrimary font-black text-lg tracking-wider uppercase">
                     Setup 2FA Shield
                   </Text>
