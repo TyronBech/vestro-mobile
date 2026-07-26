@@ -16,21 +16,26 @@ import {
   Coins,
   Save,
   RefreshCw,
+  Plus,
   LucideIcon
 } from "lucide-react-native";
 
 import { Colors } from "../../constants/colors";
 import { Strings } from "../../constants/string";
-import { fetchAnalyticsData, updateBudgetSalary } from "../../src/services/api/endpoints/analytics";
-import { AnalyticsData } from "../../src/types";
+import { fetchAnalyticsData, updateBudgetSalary, updateBudgetConfigByIdApi } from "../../src/services/api/endpoints/analytics";
+import { AnalyticsData, BudgetConfig } from "../../src/types";
 import { useUIStore } from "../../src/store/ui-store";
 import { useToastStore } from "../../src/store/toast-store";
+import { useAuthStore } from "../../src/store/auth-store";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-import { useAuthStore } from "../../src/store/auth-store";
 const containerPadding = 24;
 const cardPadding = 20;
 const chartWidth = SCREEN_WIDTH - containerPadding * 2 - cardPadding * 2;
+
+const CARD_WIDTH = SCREEN_WIDTH - 64;
+const CARD_GAP = 12;
+const SIDE_INSET = (SCREEN_WIDTH - CARD_WIDTH) / 2;
 
 // Icon mapping based on CoreNetworkType
 const iconMap: Record<string, LucideIcon> = {
@@ -50,13 +55,14 @@ const iconMap: Record<string, LucideIcon> = {
 export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
-  const [savingSalary, setSavingSalary] = useState(false);
+  const [savingConfigId, setSavingConfigId] = useState<string | null>(null);
   const [data, setData] = useState<AnalyticsData | null>(null);
-  const [inputSalary, setInputSalary] = useState("");
+  const [inputSalaries, setInputSalaries] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const budgetUpdateTrigger = useUIStore((state) => state.budgetUpdateTrigger);
+  const openBudgetModal = useUIStore((state) => state.openBudgetModal);
   const toastStore = useToastStore();
   const { isSessionLocked } = useAuthStore();
 
@@ -66,9 +72,16 @@ export default function AnalyticsScreen() {
     const result = await fetchAnalyticsData();
     if (result.ok) {
       setData(result.value);
-      if (result.value.budgetConfig) {
-        setInputSalary((result.value.budgetConfig.netSalary / 100).toString());
-      }
+      const configs = (result.value.budgetConfigs && result.value.budgetConfigs.length > 0)
+        ? result.value.budgetConfigs
+        : (result.value.budgetConfig ? [result.value.budgetConfig] : []);
+      
+      const salaryMap: Record<string, string> = {};
+      configs.forEach((cfg) => {
+        const key = cfg.id || 'default';
+        salaryMap[key] = (cfg.netSalary / 100).toString();
+      });
+      setInputSalaries(salaryMap);
     } else {
       setError(result.error);
     }
@@ -95,30 +108,32 @@ export default function AnalyticsScreen() {
     }
   }, [loadData, budgetUpdateTrigger, isSessionLocked]);
 
-  const handleSaveSalary = async () => {
-    const salaryPesos = parseFloat(inputSalary);
+  const handleSaveConfigSalary = async (cfg: BudgetConfig) => {
+    const key = cfg.id || 'default';
+    const salaryVal = inputSalaries[key] || (cfg.netSalary / 100).toString();
+    const salaryPesos = parseFloat(salaryVal);
+
     if (isNaN(salaryPesos) || salaryPesos <= 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show(Strings.validationSalary, "error");
       return;
     }
 
-    setSavingSalary(true);
+    setSavingConfigId(key);
     const salaryCents = Math.round(salaryPesos * 100);
-    
-    // Default to a 50/30/10/10 split if no config exists yet
-    const needsRate = data?.budgetConfig?.needsRate ?? 0.5;
-    const wantsRate = data?.budgetConfig?.wantsRate ?? 0.3;
-    const savingsRate = data?.budgetConfig?.savingsRate ?? 0.1;
-    const investmentsRate = data?.budgetConfig?.investmentsRate ?? 0.1;
 
-    const result = await updateBudgetSalary(
-      salaryCents,
-      needsRate,
-      wantsRate,
-      savingsRate,
-      investmentsRate
-    );
+    let result;
+    if (cfg.id) {
+      result = await updateBudgetConfigByIdApi(cfg.id, { netSalary: salaryCents });
+    } else {
+      result = await updateBudgetSalary(
+        salaryCents,
+        cfg.needsRate,
+        cfg.wantsRate,
+        cfg.savingsRate,
+        cfg.investmentsRate
+      );
+    }
 
     if (result.ok) {
       toastStore.show("Salary updated successfully!", "success");
@@ -130,7 +145,7 @@ export default function AnalyticsScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       toastStore.show("Failed to update salary: " + result.error, "error");
     }
-    setSavingSalary(false);
+    setSavingConfigId(null);
   };
 
   const formatCurrency = (cents: number) => {
@@ -173,18 +188,17 @@ export default function AnalyticsScreen() {
     );
   }
 
-  // Live calculator values
-  const currentCalculatedSalary = parseFloat(inputSalary) || 0;
-  const salaryCents = currentCalculatedSalary * 100;
-  const needsRate = data.budgetConfig?.needsRate ?? 0.5;
-  const wantsRate = data.budgetConfig?.wantsRate ?? 0.3;
-  const savingsRate = data.budgetConfig?.savingsRate ?? 0.1;
-  const investmentsRate = data.budgetConfig?.investmentsRate ?? 0.1;
+  const rawConfigs = (data.budgetConfigs && data.budgetConfigs.length > 0)
+    ? [...data.budgetConfigs]
+    : (data.budgetConfig ? [data.budgetConfig] : []);
 
-  const calculatedNeeds = salaryCents * needsRate;
-  const calculatedWants = salaryCents * wantsRate;
-  const calculatedSavings = salaryCents * savingsRate;
-  const calculatedInvestments = salaryCents * investmentsRate;
+  const budgetConfigsList: BudgetConfig[] = rawConfigs.sort((a, b) => {
+    const aIsPrimary = a.name?.toLowerCase().includes('primary') ?? false;
+    const bIsPrimary = b.name?.toLowerCase().includes('primary') ?? false;
+    if (aIsPrimary && !bIsPrimary) return -1;
+    if (!aIsPrimary && bIsPrimary) return 1;
+    return (new Date(a.createdAt || 0).getTime()) - (new Date(b.createdAt || 0).getTime());
+  });
 
   // Format Net Worth data for LineChart (Blue Theme)
   const netWorthDataPoints = data.netWorthTrend.map((p) => ({
@@ -225,6 +239,9 @@ export default function AnalyticsScreen() {
     ? `${data.netWorthTrend[0].month} - ${data.netWorthTrend[data.netWorthTrend.length - 1].month} ${new Date().getFullYear()}`
     : "";
 
+  const totalCarouselItems = budgetConfigsList.length + 1;
+  const snapOffsets = Array.from({ length: totalCarouselItems }, (_, i) => i * (CARD_WIDTH + CARD_GAP));
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <ScrollView
@@ -249,65 +266,119 @@ export default function AnalyticsScreen() {
           </Text>
         </View>
 
-        {/* 1. Interactive Budget Config Calculator */}
-        <View className="border border-borderLight rounded-2xl p-5 bg-background mb-6">
-          <Text className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3">
-            Budget Simulator & Config
-          </Text>
+        {/* 1. Slideable Budget Config Carousel with Peeking Design */}
+        <View className="mb-6" style={{ marginHorizontal: -containerPadding }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToOffsets={snapOffsets}
+            decelerationRate="fast"
+            disableIntervalMomentum={true}
+            contentContainerStyle={{ paddingHorizontal: SIDE_INSET }}
+          >
+            {budgetConfigsList.map((cfg, idx) => {
+              const key = cfg.id || `cfg-${idx}`;
+              const salaryInputVal = inputSalaries[key] ?? (cfg.netSalary / 100).toString();
+              const currentSalaryPesos = parseFloat(salaryInputVal) || 0;
+              const salaryCents = currentSalaryPesos * 100;
 
-          <View className="flex-row items-center border border-border rounded-xl px-4 py-2 bg-backgroundLight mb-4">
-            <Text className="text-sm font-bold text-textPrimary mr-2">₱</Text>
-            <TextInput
-              value={inputSalary}
-              onChangeText={setInputSalary}
-              placeholder="Enter monthly net salary"
-              keyboardType="numeric"
-              placeholderTextColor={Colors.textMuted}
-              className="flex-1 text-sm font-bold text-textPrimary p-0"
-            />
-            {savingSalary ? (
-              <ActivityIndicator size="small" color={Colors.actionPrimary} />
-            ) : (
-              <TouchableOpacity onPress={handleSaveSalary} style={{ padding: 4 }}>
-                <Save size={18} stroke={Colors.actionPrimary} strokeWidth={2.5} />
-              </TouchableOpacity>
-            )}
-          </View>
+              const cNeeds = salaryCents * cfg.needsRate;
+              const cWants = salaryCents * cfg.wantsRate;
+              const cSavings = salaryCents * cfg.savingsRate;
+              const cInvestments = salaryCents * cfg.investmentsRate;
 
-          {/* Computed Breakdown Table */}
-          <View className="space-y-3">
-            <View className="flex-row justify-between items-center py-1.5 border-b border-borderLight">
-              <View className="flex-row items-center">
-                <View className="w-2.5 h-2.5 rounded-full bg-textPrimary mr-2" />
-                <Text className="text-xs font-bold text-textSecondary">Needs ({Math.round(needsRate * 100)}%)</Text>
+              const isSavingThis = savingConfigId === key;
+
+              return (
+                <View
+                  key={key}
+                  style={{ width: CARD_WIDTH, marginRight: CARD_GAP }}
+                  className="border border-borderLight rounded-2xl p-6 bg-background"
+                >
+                  <View className="flex-row justify-between items-center mb-3">
+                    <View className="flex-row items-center">
+                      <View className="px-2.5 py-1 bg-backgroundLight border border-border rounded-lg mr-2">
+                        <Text className="text-[10px] font-black uppercase tracking-wider text-textPrimary">
+                          {cfg.name || `JOB ${idx + 1}`}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  <View className="flex-row items-center border border-border rounded-xl px-4 py-2 bg-backgroundLight mb-4">
+                    <Text className="text-sm font-bold text-textPrimary mr-2">₱</Text>
+                    <TextInput
+                      value={salaryInputVal}
+                      onChangeText={(txt) => setInputSalaries((prev) => ({ ...prev, [key]: txt }))}
+                      placeholder="Enter monthly net salary"
+                      keyboardType="numeric"
+                      placeholderTextColor={Colors.textMuted}
+                      className="flex-1 text-sm font-bold text-textPrimary p-0"
+                    />
+                    {isSavingThis ? (
+                      <ActivityIndicator size="small" color={Colors.actionPrimary} />
+                    ) : (
+                      <TouchableOpacity onPress={() => handleSaveConfigSalary(cfg)} style={{ padding: 4 }}>
+                        <Save size={18} stroke={Colors.actionPrimary} strokeWidth={2.5} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Computed Breakdown Table */}
+                  <View className="space-y-3">
+                    <View className="flex-row justify-between items-center py-1.5 border-b border-borderLight">
+                      <View className="flex-row items-center">
+                        <View className="w-2.5 h-2.5 rounded-full bg-textPrimary mr-2" />
+                        <Text className="text-xs font-bold text-textSecondary">Needs ({Math.round(cfg.needsRate * 100)}%)</Text>
+                      </View>
+                      <Text className="text-xs font-black text-textPrimary">{formatCurrency(cNeeds)}</Text>
+                    </View>
+
+                    <View className="flex-row justify-between items-center py-1.5 border-b border-borderLight">
+                      <View className="flex-row items-center">
+                        <View className="w-2.5 h-2.5 rounded-full bg-actionPrimary mr-2" />
+                        <Text className="text-xs font-bold text-textSecondary">Wants ({Math.round(cfg.wantsRate * 100)}%)</Text>
+                      </View>
+                      <Text className="text-xs font-black text-textPrimary">{formatCurrency(cWants)}</Text>
+                    </View>
+
+                    <View className="flex-row justify-between items-center py-1.5 border-b border-borderLight">
+                      <View className="flex-row items-center">
+                        <View className="w-2.5 h-2.5 rounded-full bg-success mr-2" />
+                        <Text className="text-xs font-bold text-textSecondary">Savings ({Math.round(cfg.savingsRate * 100)}%)</Text>
+                      </View>
+                      <Text className="text-xs font-black text-textPrimary">{formatCurrency(cSavings)}</Text>
+                    </View>
+
+                    <View className="flex-row justify-between items-center py-1.5">
+                      <View className="flex-row items-center">
+                        <View className="w-2.5 h-2.5 rounded-full bg-purple-500 mr-2" />
+                        <Text className="text-xs font-bold text-textSecondary">Investments ({Math.round(cfg.investmentsRate * 100)}%)</Text>
+                      </View>
+                      <Text className="text-xs font-black text-textPrimary">{formatCurrency(cInvestments)}</Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+
+            {/* Add Budget Card at the end of Carousel */}
+            <TouchableOpacity
+              onPress={() => openBudgetModal()}
+              style={{ width: CARD_WIDTH }}
+              className="border-2 border-dashed border-actionPrimary/40 rounded-2xl p-6 bg-actionPrimary/5 items-center justify-center min-h-[220px]"
+            >
+              <View className="w-12 h-12 rounded-full bg-actionPrimary/10 items-center justify-center mb-3">
+                <Plus size={24} color={Colors.actionPrimary} strokeWidth={2.5} />
               </View>
-              <Text className="text-xs font-black text-textPrimary">{formatCurrency(calculatedNeeds)}</Text>
-            </View>
-
-            <View className="flex-row justify-between items-center py-1.5 border-b border-borderLight">
-              <View className="flex-row items-center">
-                <View className="w-2.5 h-2.5 rounded-full bg-actionPrimary mr-2" />
-                <Text className="text-xs font-bold text-textSecondary">Wants ({Math.round(wantsRate * 100)}%)</Text>
-              </View>
-              <Text className="text-xs font-black text-textPrimary">{formatCurrency(calculatedWants)}</Text>
-            </View>
-
-            <View className="flex-row justify-between items-center py-1.5 border-b border-borderLight">
-              <View className="flex-row items-center">
-                <View className="w-2.5 h-2.5 rounded-full bg-success mr-2" />
-                <Text className="text-xs font-bold text-textSecondary">Savings ({Math.round(savingsRate * 100)}%)</Text>
-              </View>
-              <Text className="text-xs font-black text-textPrimary">{formatCurrency(calculatedSavings)}</Text>
-            </View>
-
-            <View className="flex-row justify-between items-center py-1.5">
-              <View className="flex-row items-center">
-                <View className="w-2.5 h-2.5 rounded-full bg-purple-500 mr-2" />
-                <Text className="text-xs font-bold text-textSecondary">Investments ({Math.round(investmentsRate * 100)}%)</Text>
-              </View>
-              <Text className="text-xs font-black text-textPrimary">{formatCurrency(calculatedInvestments)}</Text>
-            </View>
-          </View>
+              <Text className="text-sm font-black uppercase tracking-widest text-actionPrimary mb-1">
+                Add Budget Config
+              </Text>
+              <Text className="text-xs text-textSecondary font-bold text-center">
+                Configure allocations for a secondary job, freelance income, or side hustle.
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
 
         {/* 2. Net Worth Growth Line Graph (Blue Premium Theme) */}
