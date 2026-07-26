@@ -93,11 +93,16 @@ export interface CoreNetworkBalance {
 }
 
 export interface BudgetConfig {
+  id?: string;
+  name?: string;
   netSalary: number;
   needsRate: number;
   wantsRate: number;
   savingsRate: number;
   investmentsRate: number;
+  cashAmount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AnalyticsData {
@@ -107,6 +112,7 @@ export interface AnalyticsData {
   cashFlowTrend: CashFlowDataPoint[];
   coreNetworkBalances: CoreNetworkBalance[];
   budgetConfig: BudgetConfig | null;
+  budgetConfigs?: BudgetConfig[];
   sweepTrend: SweepDataPoint[];
 }
 
