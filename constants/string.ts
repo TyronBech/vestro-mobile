@@ -64,4 +64,13 @@ export const Strings = {
   validationEmailRequired: "Valid email is required.",
   validationMediaPermissionRequired: "Permission to access media library is required.",
   validationSalary: "Please enter a valid salary amount.",
+
+  // Luxury Wishlist & Targets
+  luxuryWidgetTitle: "Luxury Wishlist",
+  luxuryWidgetSubtitle: "Target Luxuries & Impulse Shield",
+  luxuryAddButton: "Add Luxury Item",
+  luxuryViewAll: "View All",
+  luxuryTotalWishlist: "Total Wishlist Target",
+  luxuryTotalSaved: "Avoided Impulses Saved",
+  luxuryPurchasedTotal: "Purchased Luxuries",
 } as const;

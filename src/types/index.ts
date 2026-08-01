@@ -265,3 +265,71 @@ export interface AppNotification {
   sentAt: string;
   readAt: string | null;
 }
+
+export type LuxuryCategory = 'TECH' | 'GADGETS' | 'GAMING' | 'APPAREL' | 'DINING' | 'LIFESTYLE' | 'OTHER';
+export type LuxuryPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+export type LuxuryStatus = 'WISHLIST' | 'SAVING' | 'PURCHASED' | 'CANCELLED';
+
+export interface LuxuryItem {
+  id: string;
+  userId: string;
+  name: string;
+  category: LuxuryCategory;
+  priceCents: number;
+  description: string | null;
+  priority: LuxuryPriority;
+  status: LuxuryStatus;
+  targetDate: string | null;
+  purchasedAt: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  cashFlowId: string | null;
+  cashFlow?: {
+    id: string;
+    amount: number;
+    type: string;
+    notes: string | null;
+    coreNetwork?: {
+      id: string;
+      name: string;
+    } | null;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateLuxuryItemParams {
+  name: string;
+  category: LuxuryCategory;
+  price: number;
+  description?: string;
+  priority: LuxuryPriority;
+  status: LuxuryStatus;
+  targetDate?: string;
+}
+
+export interface UpdateLuxuryItemParams {
+  name?: string;
+  category?: LuxuryCategory;
+  price?: number;
+  description?: string | null;
+  priority?: LuxuryPriority;
+  status?: LuxuryStatus;
+  targetDate?: string | null;
+}
+
+export interface MarkLuxuryPurchasedParams {
+  purchasedAt?: string;
+  actualPrice?: number;
+  cashFlowId?: string;
+  createCashFlow?: {
+    coreNetworkId: string;
+    notes?: string;
+  };
+}
+
+export interface MarkLuxuryCancelledParams {
+  cancelledAt?: string;
+  cancelReason?: string;
+}
+
