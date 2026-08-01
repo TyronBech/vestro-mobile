@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  Alert,
   Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -34,9 +33,11 @@ import { useLuxuryItems } from '../src/hooks/useLuxuryItems';
 import { fetchCoreNetworks, CoreNetwork } from '../src/services/api/endpoints/core-networks';
 import FlatModal from '../src/components/flat-modal';
 import { LuxuryCategory, LuxuryPriority, LuxuryStatus, LuxuryItem } from '../src/types';
+import { useToastStore } from '../src/store/toast-store';
 
 export default function LuxuryChecklistScreen() {
   const router = useRouter();
+  const toastStore = useToastStore();
   const {
     activeWishlistItems,
     purchasedItems,
@@ -117,14 +118,27 @@ export default function LuxuryChecklistScreen() {
   const handleSubmitAddEdit = async () => {
     if (!formName.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Validation Error', 'Please enter a name for the luxury item.');
+      toastStore.show('Please enter a name for the luxury item.', 'error');
       return;
     }
     const priceNum = parseFloat(formPrice);
     if (isNaN(priceNum) || priceNum <= 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Validation Error', 'Please enter a valid price greater than 0.');
+      toastStore.show('Please enter a valid price greater than 0.', 'error');
       return;
+    }
+
+    const priceCents = Math.round(priceNum * 100);
+    if (formStatus === 'SAVING' || formStatus === 'PURCHASED') {
+      const targetNet = coreNetworks.find((n) => n.name.toLowerCase().includes('want') || n.type === 'WANTS_SANDBOX') || coreNetworks[0];
+      if (targetNet && priceCents > targetNet.balance) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        toastStore.show(
+          `Insufficient funds: Item price (₱${priceNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) exceeds available balance in ${targetNet.name} (₱${(targetNet.balance / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}).`,
+          'error'
+        );
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -156,10 +170,11 @@ export default function LuxuryChecklistScreen() {
 
     if (success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      toastStore.show('Luxury item saved successfully!', 'success');
       setIsAddEditModalOpen(false);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Error', 'Failed to save luxury item.');
+      toastStore.show('Failed to save luxury item.', 'error');
     }
   };
 
@@ -181,13 +196,29 @@ export default function LuxuryChecklistScreen() {
 
     const actualPriceNum = parseFloat(actualPriceInput);
     if (isNaN(actualPriceNum) || actualPriceNum <= 0) {
-      Alert.alert('Validation Error', 'Please enter a valid price.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      toastStore.show('Please enter a valid price.', 'error');
       return;
     }
 
-    if (recordCashFlow && !selectedNetworkId) {
-      Alert.alert('Validation Error', 'Please select a Core Network account to record the outflow.');
-      return;
+    if (recordCashFlow) {
+      if (!selectedNetworkId) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        toastStore.show('Please select a Core Network account to record the outflow.', 'error');
+        return;
+      }
+
+      const selectedNet = coreNetworks.find((n) => n.id === selectedNetworkId);
+      const actualPriceCents = Math.round(actualPriceNum * 100);
+
+      if (selectedNet && actualPriceCents > selectedNet.balance) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        toastStore.show(
+          `Insufficient funds: Purchase price (₱${actualPriceNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) exceeds available balance in ${selectedNet.name} (₱${(selectedNet.balance / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}).`,
+          'error'
+        );
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -206,10 +237,11 @@ export default function LuxuryChecklistScreen() {
 
     if (res.success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      toastStore.show('Item marked as purchased!', 'success');
       setIsPurchaseModalOpen(false);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Purchase Failed', res.error || 'Failed to complete purchase.');
+      toastStore.show(res.error || 'Failed to complete purchase.', 'error');
     }
   };
 
@@ -234,10 +266,11 @@ export default function LuxuryChecklistScreen() {
 
     if (res.success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      toastStore.show('Impulse avoided & saved!', 'success');
       setIsCancelModalOpen(false);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Action Failed', res.error || 'Failed to cancel item.');
+      toastStore.show(res.error || 'Failed to cancel item.', 'error');
     }
   };
 

@@ -121,6 +121,20 @@ export default function CashFlowModal() {
       return;
     }
 
+    if (type === "OUTFLOW") {
+      const selectedNet = coreNetworks.find((n) => n.id === selectedCoreNetworkId);
+      const amtCents = Math.round(amt * 100);
+      if (selectedNet && amtCents > selectedNet.balance) {
+        triggerErrorEffects();
+        toastStore.show(
+          `Outflow amount (₱${amt.toFixed(2)}) exceeds available balance of ${selectedNet.name} (₱${(selectedNet.balance / 100).toFixed(2)}).`,
+          "error"
+        );
+        isSubmittingRef.current = false;
+        return;
+      }
+    }
+
     setSaving(true);
 
     const res = await createCashFlow({
