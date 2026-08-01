@@ -1,9 +1,9 @@
+import { useCallback } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import {
   Sparkles,
   Plus,
-  ChevronRight,
   ShieldCheck,
   Tag,
   Laptop,
@@ -26,7 +26,13 @@ export function LuxuryWishlistWidget({
   onOpenAddModal,
 }: LuxuryWishlistWidgetProps) {
   const router = useRouter();
-  const { activeWishlistItems, metrics, loading } = useLuxuryItems();
+  const { activeWishlistItems, metrics, loading, refresh } = useLuxuryItems();
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   const getCategoryIcon = (category: LuxuryCategory) => {
     switch (category) {
@@ -86,49 +92,31 @@ export function LuxuryWishlistWidget({
   };
 
   return (
-    <View className="bg-background dark:bg-backgroundDark border-2 border-border dark:border-borderLight rounded-2xl p-5 mb-6">
-      {/* Header */}
-      <View className="flex-row justify-between items-center mb-4">
-        <View className="flex-row items-center gap-2.5">
-          <View className="bg-actionPrimary/10 p-2.5 rounded-xl">
-            <Sparkles
-              size={Sizes.iconMedium}
-              color={Colors.actionPrimary}
-              strokeWidth={Sizes.strokeMedium}
-            />
-          </View>
-          <View>
-            <Text className="text-base font-black text-textPrimary dark:text-white uppercase tracking-wider">
-              LUXURY WISHLIST
-            </Text>
-            <Text className="text-xs font-medium text-textMuted mt-0.5">
-              Target Luxuries & Impulse Shield
-            </Text>
-          </View>
+    <View className="border border-borderLight rounded-2xl p-6 bg-background dark:bg-backgroundDark mb-6">
+      {/* Header (Same design as Latest Activity card) */}
+      <View className="flex-row items-center justify-between mb-6">
+        <View className="flex-row items-center">
+          <Sparkles size={18} stroke={Colors.textPrimary} strokeWidth={2.5} />
+          <Text className="text-textPrimary dark:text-white text-xs font-bold uppercase tracking-widest ml-2">
+            Luxury Wishlist
+          </Text>
         </View>
-
         <TouchableOpacity
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push("/luxury-checklist");
           }}
-          className="flex-row items-center bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-xl gap-1"
         >
-          <Text className="text-xs font-bold text-textPrimary dark:text-white uppercase">
-            VIEW ALL
+          <Text className="text-actionPrimary text-[10px] font-bold uppercase tracking-widest">
+            See All
           </Text>
-          <ChevronRight
-            size={14}
-            color={Colors.textPrimary}
-            strokeWidth={2.5}
-          />
         </TouchableOpacity>
       </View>
 
       {/* Metrics Row */}
       <View className="flex-row gap-3 mb-4">
         <View className="flex-1 bg-gray-50 dark:bg-gray-800/60 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700">
-          <Text className="text-[10px] font-bold text-textMuted uppercase tracking-wider">
+          <Text className="text-[8px] font-bold text-textMuted uppercase tracking-wider">
             TOTAL TARGET COST
           </Text>
           <Text className="text-sm font-black text-textPrimary dark:text-white mt-1">
@@ -143,7 +131,7 @@ export function LuxuryWishlistWidget({
               color={Colors.successAlt}
               strokeWidth={2.5}
             />
-            <Text className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+            <Text className="text-[8px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
               IMPULSES SAVED
             </Text>
           </View>

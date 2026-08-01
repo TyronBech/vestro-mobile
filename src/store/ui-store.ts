@@ -39,6 +39,10 @@ interface UIState {
   // Counter to trigger data refreshes when networks or macro assets update
   networkUpdateTrigger: number;
   triggerNetworkUpdate: () => void;
+
+  // Counter to trigger data refreshes when luxury wishlist items update
+  luxuryUpdateTrigger: number;
+  triggerLuxuryUpdate: () => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -77,4 +81,7 @@ export const useUIStore = create<UIState>((set) => ({
 
   networkUpdateTrigger: 0,
   triggerNetworkUpdate: () => set((state) => ({ networkUpdateTrigger: state.networkUpdateTrigger + 1 })),
+
+  luxuryUpdateTrigger: 0,
+  triggerLuxuryUpdate: () => set((state) => ({ luxuryUpdateTrigger: state.luxuryUpdateTrigger + 1 })),
 }));

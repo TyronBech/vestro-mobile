@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useUIStore } from '../store/ui-store';
 import {
   LuxuryItem,
   CreateLuxuryItemParams,
@@ -19,6 +20,7 @@ export function useLuxuryItems() {
   const [items, setItems] = useState<LuxuryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const luxuryUpdateTrigger = useUIStore((state) => state.luxuryUpdateTrigger);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -34,12 +36,13 @@ export function useLuxuryItems() {
 
   useEffect(() => {
     loadItems();
-  }, [loadItems]);
+  }, [loadItems, luxuryUpdateTrigger]);
 
   const addItem = async (params: CreateLuxuryItemParams): Promise<boolean> => {
     const result = await apiCreateLuxuryItem(params);
     if (result.ok) {
       setItems((prev) => [result.value, ...prev]);
+      useUIStore.getState().triggerLuxuryUpdate();
       return true;
     } else {
       setError(result.error);
@@ -51,6 +54,7 @@ export function useLuxuryItems() {
     const result = await apiUpdateLuxuryItem(id, params);
     if (result.ok) {
       setItems((prev) => prev.map((item) => (item.id === id ? result.value : item)));
+      useUIStore.getState().triggerLuxuryUpdate();
       return true;
     } else {
       setError(result.error);
@@ -62,6 +66,7 @@ export function useLuxuryItems() {
     const result = await apiMarkLuxuryPurchased(id, params);
     if (result.ok) {
       setItems((prev) => prev.map((item) => (item.id === id ? result.value : item)));
+      useUIStore.getState().triggerLuxuryUpdate();
       return { success: true };
     } else {
       return { success: false, error: result.error };
@@ -72,6 +77,7 @@ export function useLuxuryItems() {
     const result = await apiMarkLuxuryCancelled(id, params);
     if (result.ok) {
       setItems((prev) => prev.map((item) => (item.id === id ? result.value : item)));
+      useUIStore.getState().triggerLuxuryUpdate();
       return { success: true };
     } else {
       return { success: false, error: result.error };
@@ -82,6 +88,7 @@ export function useLuxuryItems() {
     const result = await apiDeleteLuxuryItem(id);
     if (result.ok) {
       setItems((prev) => prev.filter((item) => item.id !== id));
+      useUIStore.getState().triggerLuxuryUpdate();
       return true;
     } else {
       setError(result.error);

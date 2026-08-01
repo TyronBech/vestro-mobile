@@ -16,7 +16,6 @@ import {
   Plus,
   CheckCircle2,
   XCircle,
-  Trash2,
   Edit2,
   Laptop,
   Gamepad2,
@@ -47,7 +46,6 @@ export default function LuxuryChecklistScreen() {
     updateItem,
     markPurchased,
     markCancelled,
-    removeItem,
     metrics,
   } = useLuxuryItems();
 
@@ -241,27 +239,6 @@ export default function LuxuryChecklistScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Action Failed', res.error || 'Failed to cancel item.');
     }
-  };
-
-  // Confirm Delete
-  const handleDeleteItem = (item: LuxuryItem) => {
-    Alert.alert(
-      'Delete Luxury Item',
-      `Are you sure you want to delete "${item.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const success = await removeItem(item.id);
-            if (success) {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            }
-          },
-        },
-      ]
-    );
   };
 
   // Category Icon & Label mapping
@@ -594,16 +571,6 @@ export default function LuxuryChecklistScreen() {
                         className="p-2 bg-gray-100 dark:bg-gray-800 rounded-xl"
                       >
                         <Edit2 size={14} color={Colors.textPrimary} strokeWidth={2} />
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                          handleDeleteItem(item);
-                        }}
-                        className="p-2 bg-red-500/10 rounded-xl"
-                      >
-                        <Trash2 size={14} color={Colors.error} strokeWidth={2} />
                       </TouchableOpacity>
                     </View>
 

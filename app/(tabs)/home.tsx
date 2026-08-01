@@ -121,6 +121,7 @@ export default function HomeTabScreen() {
         if (flowsRes.ok) {
           setCashFlows(flowsRes.value);
         }
+        useUIStore.getState().triggerLuxuryUpdate();
       } else {
         await apiClient("/auth/login");
       }
@@ -152,6 +153,7 @@ export default function HomeTabScreen() {
         if (flowsRes.ok) {
           setCashFlows(flowsRes.value);
         }
+        useUIStore.getState().triggerLuxuryUpdate();
       }
     } catch (err) {
       console.error("Home screen refresh failed:", err);
