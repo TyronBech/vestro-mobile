@@ -122,10 +122,9 @@ export default function CashFlowModal() {
     }
 
     setSaving(true);
-    const amountCents = Math.round(amt * 100);
 
     const res = await createCashFlow({
-      amount: amountCents,
+      amount: amt,
       coreNetworkId: selectedCoreNetworkId,
       type,
       notes: notes.trim() || undefined,
