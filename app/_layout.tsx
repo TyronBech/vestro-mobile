@@ -195,6 +195,7 @@ export default function RootLayout() {
           <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
           <Stack.Screen name="google-auth" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="luxury-checklist" options={{ headerShown: false, title: "Wishlist" }} />
           <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
         </Stack>
         {isAuthenticated && isSessionLocked && <SessionLockScreen />}
