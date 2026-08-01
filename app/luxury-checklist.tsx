@@ -314,7 +314,7 @@ export default function LuxuryChecklistScreen() {
   const filteredItems = getFilteredItems();
 
   return (
-    <View className="flex-1 bg-background dark:bg-backgroundDark pt-12">
+    <View className="flex-1 bg-background dark:bg-backgroundDark pt-16">
       {/* Top Header Navigation */}
       <View className="px-5 py-2 flex-row justify-between items-center mb-5">
         <TouchableOpacity
