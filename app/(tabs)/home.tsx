@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Path, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import VisaIcon from '../../assets/svgs/visa.svg';
 import MastercardIcon from '../../assets/svgs/mastercard.svg';
 
@@ -15,7 +15,6 @@ import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { useAuthStore } from "../../src/store/auth-store";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../../src/services/api/config";
-import { fetchProfile } from "../../src/services/api/endpoints/profile";
 import { apiClient } from "../../src/services/api/client";
 import { Colors } from "../../constants/colors";
 import { Sizes } from "../../constants/sizes";
@@ -29,6 +28,7 @@ import { fetchCreditCards, CreditCard } from "../../src/services/api/endpoints/c
 import { CreditCardStack } from "../../src/components/CreditCardStack";
 import { fetchNotifications } from "../../src/services/api/endpoints/notification";
 import FlatModal from "../../src/components/flat-modal";
+import { LuxuryWishlistWidget } from "../../src/components/LuxuryWishlistWidget";
 
 
 
@@ -121,6 +121,7 @@ export default function HomeTabScreen() {
         if (flowsRes.ok) {
           setCashFlows(flowsRes.value);
         }
+        useUIStore.getState().triggerLuxuryUpdate();
       } else {
         await apiClient("/auth/login");
       }
@@ -152,6 +153,7 @@ export default function HomeTabScreen() {
         if (flowsRes.ok) {
           setCashFlows(flowsRes.value);
         }
+        useUIStore.getState().triggerLuxuryUpdate();
       }
     } catch (err) {
       console.error("Home screen refresh failed:", err);
@@ -361,6 +363,9 @@ export default function HomeTabScreen() {
         ) : (
           <CreditCardStack cards={creditCards} showBalance={showBalance} />
         )}
+
+        {/* Luxury Wishlist Widget */}
+        <LuxuryWishlistWidget onOpenAddModal={() => router.push('/luxury-checklist')} />
 
         {/* Latest Activity Card */}
         <View className="border border-borderLight rounded-2xl p-6 bg-background mb-6">

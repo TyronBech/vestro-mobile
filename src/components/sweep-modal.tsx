@@ -138,10 +138,9 @@ export default function SweepModal() {
     }
 
     setSaving(true);
-    const amountCents = Math.round(amt * 100);
 
     const res = await recordManualSweep({
-      amount: amountCents,
+      amount: amt,
       coreNetworkId: selectedCoreNetworkId,
       notes: notes.trim() || undefined,
       sweptAt: selectedPeriod || undefined,

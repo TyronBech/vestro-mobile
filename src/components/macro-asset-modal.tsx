@@ -135,15 +135,11 @@ export default function MacroAssetModal() {
       }
     }
 
-    // Convert inputs to cents (Cents Rule)
-    const balanceInCents = Math.round(numBalance * 100);
-    const targetGoalInCents = numTargetGoal !== null ? Math.round(numTargetGoal * 100) : null;
-
     const res = await createMacroAsset({
       bankName: bankName.trim(),
       purpose: purpose.trim(),
-      balance: balanceInCents,
-      targetGoal: targetGoalInCents,
+      balance: numBalance,
+      targetGoal: numTargetGoal,
       colorCode: colorCode.trim(),
       iconUrl: uploadedUrl,
       cardBrand,
