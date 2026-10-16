@@ -14,6 +14,7 @@ import { X } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
 
 import Toast from "./toast";
+import { useAuthStore } from "../store/auth-store";
 
 interface FlatModalProps {
   visible: boolean;
@@ -30,6 +31,7 @@ export default function FlatModal({
   headerIcon,
   children,
 }: FlatModalProps) {
+  const canShowModal = useAuthStore((state) => state.isAuthenticated && !state.isSessionLocked);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
@@ -48,8 +50,8 @@ export default function FlatModal({
 
   return (
     <Modal
-      visible={visible}
-      animationType="fade"
+      visible={visible && canShowModal}
+      animationType={canShowModal ? "fade" : "none"}
       transparent
       onRequestClose={onClose}
     >

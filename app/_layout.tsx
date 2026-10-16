@@ -1,7 +1,7 @@
 import "@/global.css";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, View, Text } from "react-native";
+import { Fragment, useEffect, useState } from "react";
+import { ActivityIndicator, View, Text, Keyboard, AppState, BackHandler } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as Linking from "expo-linking";
@@ -62,7 +62,7 @@ function getJwtExpiry(token: string | null): number | null {
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
-  const { isAuthenticated, accessToken, isSessionLocked, setSessionLocked } = useAuthStore();
+  const { user, isAuthenticated, accessToken, isSessionLocked, setSessionLocked } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -149,14 +149,19 @@ export default function RootLayout() {
     };
 
     checkExpiry();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") checkExpiry();
+    });
     const interval = setInterval(checkExpiry, 5000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
   }, [isAuthenticated, accessToken, isSessionLocked, setSessionLocked]);
 
   useEffect(() => {
     if (!isReady) return;
 
-    const inTabsGroup = segments[0] === "(tabs)";
     const onAuthScreens =
       segments[0] === "login" ||
       segments[0] === "register" ||
@@ -164,14 +169,18 @@ export default function RootLayout() {
       segments[0] === "index" ||
       !segments[0];
 
-    if (!isAuthenticated && inTabsGroup) {
-      // Redirect unauthenticated users to landing page
-      router.replace("/");
-    } else if (isAuthenticated && onAuthScreens) {
+    if (isAuthenticated && onAuthScreens) {
       // Redirect authenticated users to home tab
       router.replace("/(tabs)/home");
     }
-  }, [isAuthenticated, segments, isReady]);
+  }, [isAuthenticated, segments, isReady, router]);
+
+  useEffect(() => {
+    if (isSessionLocked || !isAuthenticated) Keyboard.dismiss();
+    if (!isAuthenticated || !isSessionLocked) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => true);
+    return () => subscription.remove();
+  }, [isSessionLocked, isAuthenticated]);
 
   if (!isReady) {
     return (
@@ -188,25 +197,49 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style="dark" />
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="register" options={{ headerShown: false }} />
-          <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
-          <Stack.Screen name="google-auth" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="luxury-checklist" options={{ headerShown: false, title: "Wishlist" }} />
-          <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
-        </Stack>
-        {isAuthenticated && isSessionLocked && <SessionLockScreen />}
-        <Toast />
-        <BudgetConfigModal />
-        <MacroAssetModal />
-        <CoreNetworkModal />
-        <SweepModal />
-        <CashFlowModal />
-        <CreditCardModal />
-        <NotificationModal />
+        <View
+          style={{ flex: 1 }}
+          pointerEvents={isSessionLocked ? "none" : "auto"}
+          accessibilityElementsHidden={isSessionLocked}
+          importantForAccessibility={isSessionLocked ? "no-hide-descendants" : "auto"}
+        >
+          <Stack
+            key={user?.id ?? "guest"}
+            initialRouteName={isAuthenticated ? "(tabs)" : "login"}
+            screenOptions={{ gestureEnabled: !isSessionLocked }}
+          >
+            <Stack.Protected guard={!isAuthenticated}>
+              <Stack.Screen name="login" options={{ headerShown: false }} />
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="register" options={{ headerShown: false }} />
+              <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+              <Stack.Screen name="google-auth" options={{ headerShown: false }} />
+            </Stack.Protected>
+            <Stack.Protected guard={isAuthenticated}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="luxury-checklist" options={{ headerShown: false, title: "Wishlist" }} />
+            </Stack.Protected>
+            <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
+          </Stack>
+          <Toast />
+          {isAuthenticated && (
+            <Fragment key={user?.id}>
+              <BudgetConfigModal />
+              <MacroAssetModal />
+              <CoreNetworkModal />
+              <SweepModal />
+              <CashFlowModal />
+              <CreditCardModal />
+              <NotificationModal />
+            </Fragment>
+          )}
+        </View>
+        {isAuthenticated && isSessionLocked && (
+          <>
+            <SessionLockScreen />
+            <Toast />
+          </>
+        )}
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
