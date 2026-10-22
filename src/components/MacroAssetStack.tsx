@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, Dimensions, Image } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -11,17 +11,17 @@ import Animated, {
   Easing,
   SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Defs, Rect, RadialGradient, Stop } from 'react-native-svg';
-import { Colors } from '../../constants/colors';
-import { Sizes } from '../../constants/sizes';
-import { CreditCard } from 'lucide-react-native';
 import { MacroAsset } from '../services/api/endpoints/macro-assets';
-import * as Haptics from 'expo-haptics';
-import MastercardIcon from '../../assets/svgs/mastercard.svg';
-import VisaIcon from '../../assets/svgs/visa.svg';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
+import {
+  BankCardIdentity,
+  BankCardSurface,
+  CardAmount,
+  CardHolder,
+  CardNetwork,
+  CardNumber,
+  cardStyles,
+} from './bank-card';
+import { bankCardHeight, createBankCardTheme } from './bank-card-theme';
 
 /** Smooth ease curve — no spring bounce anywhere */
 const SMOOTH_EASING = Easing.bezier(0.25, 0.1, 0.25, 1);
@@ -34,36 +34,6 @@ const Y_OFFSET_STEP = 8;
 const SCALE_STEP = 0.03;
 
 // ─── Helpers ──────────────────────────────────────────
-
-function AssetIcon({ url }: { url: string | null }) {
-  const [error, setError] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<number | undefined>(undefined);
-
-  React.useEffect(() => {
-    if (url) {
-      Image.getSize(
-        url,
-        (width, height) => {
-          if (height > 0) setAspectRatio(width / height);
-        },
-        () => setError(true),
-      );
-    }
-  }, [url]);
-
-  if (!url || error) {
-    return <CreditCard size={Sizes.iconSmall} stroke={Colors.background} strokeWidth={Sizes.strokeMedium} />;
-  }
-
-  return (
-    <Image
-      source={{ uri: url }}
-      style={{ height: 18, aspectRatio: aspectRatio || 1 }}
-      resizeMode="contain"
-      onError={() => setError(true)}
-    />
-  );
-}
 
 /**
  * Format cents to PHP currency string.
@@ -90,6 +60,9 @@ interface StackCardProps {
   backCardOpacity: SharedValue<number>;
   topIndexShared: SharedValue<number>;
   showBalance: boolean;
+  cardholderName?: string | null;
+  cardHeight: number;
+  screenWidth: number;
 }
 
 function StackCard({
@@ -102,7 +75,14 @@ function StackCard({
   backCardOpacity,
   topIndexShared,
   showBalance,
+  cardholderName,
+  cardHeight,
+  screenWidth,
 }: StackCardProps) {
+  const theme = useMemo(
+    () => createBankCardTheme(asset.colorCode, asset.bankName),
+    [asset.colorCode, asset.bankName],
+  );
   const animatedStyle = useAnimatedStyle(() => {
     // Compute relative position from the UI-thread shared value (zero gap).
     const rawRelative = (cardIndex - topIndexShared.value) % totalCards;
@@ -134,13 +114,13 @@ function StackCard({
       // up to 12 degrees max rotation when swiped horizontally
       const rotateX = interpolate(
         translateX.value,
-        [-SCREEN_WIDTH, SCREEN_WIDTH],
+        [-screenWidth, screenWidth],
         [-12, 12]
       );
       // up to 6 degrees max rotation when swiped vertically
       const rotateY = interpolate(
         translateY.value,
-        [-SCREEN_WIDTH, SCREEN_WIDTH],
+        [-screenWidth, screenWidth],
         [-6, 6]
       );
       const rotation = `${rotateX + rotateY}deg`;
@@ -200,59 +180,19 @@ function StackCard({
   // ── Card visual content ──
   const cardView = (
     <Animated.View
-      style={[{ position: 'absolute', width: '100%', height: 200 }, animatedStyle]}
+      style={[{ position: 'absolute', top: 0, width: '100%', height: cardHeight }, animatedStyle]}
     >
-      <View className="w-full h-full border border-borderLight rounded-2xl overflow-hidden shadow-sm bg-background">
-        {/* Radial gradient background */}
-        <Svg height="100%" width="100%" style={{ position: 'absolute' }}>
-          <Defs>
-            <RadialGradient
-              id={`cardGrad-${asset.id}`}
-              cx="100%"
-              cy="100%"
-              r="85%"
-              fx="100%"
-              fy="100%"
-            >
-              <Stop offset="0%" stopColor={asset.colorCode || Colors.darkStopStart} stopOpacity="1" />
-              <Stop offset="30%" stopColor={asset.colorCode || Colors.darkStopStart} stopOpacity="0.85" />
-              <Stop offset="100%" stopColor={Colors.darkStopEnd} stopOpacity="1" />
-            </RadialGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill={`url(#cardGrad-${asset.id})`} />
-        </Svg>
-
-        <View className="p-6 flex-1 justify-between">
-          {/* Top Row: Asset Icon */}
-          <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center">
-              <AssetIcon url={asset.iconUrl} />
-            </View>
-          </View>
-
-          {/* Balance */}
-          <Text className="text-background text-4xl font-black tracking-widest">
-            {showBalance ? formatCurrency(asset.balance) : '••••••••'}
-          </Text>
-
-          {/* Bottom Row: Purpose & Mastercard Logo */}
-          <View className="flex-row justify-between items-end">
-            <View>
-              <Text className="text-gray-400 text-[10px] uppercase tracking-widest mb-1">
-                Purpose
-              </Text>
-              <Text className="text-background text-sm font-bold uppercase tracking-widest">
-                {asset.purpose}
-              </Text>
-            </View>
-            {asset.cardBrand === "VISA" ? (
-              <VisaIcon width={50} height={18} color={Colors.background} />
-            ) : (
-              <MastercardIcon width={45} height={28} />
-            )}
-          </View>
+      <BankCardSurface theme={theme}>
+        <View style={cardStyles.header}>
+          <BankCardIdentity name={asset.bankName} iconUrl={asset.iconUrl} />
         </View>
-      </View>
+        <CardAmount label="Balance" value={showBalance ? formatCurrency(asset.balance) : '••••••••'} />
+        <CardNumber />
+        <View style={cardStyles.footer}>
+          <CardHolder name={cardholderName} />
+          <CardNetwork brand={asset.cardBrand} />
+        </View>
+      </BankCardSurface>
     </Animated.View>
   );
 
@@ -264,9 +204,12 @@ function StackCard({
 interface Props {
   assets: MacroAsset[];
   showBalance: boolean;
+  cardholderName?: string | null;
 }
 
-export function MacroAssetStack({ assets, showBalance }: Props) {
+export function MacroAssetStack({ assets, showBalance, cardholderName }: Props) {
+  const { width: screenWidth, fontScale } = useWindowDimensions();
+  const cardHeight = bankCardHeight('standard', fontScale);
   // React state — used only for GestureDetector binding (non-critical timing)
   const [topIndex, setTopIndex] = useState(0);
 
@@ -288,9 +231,10 @@ export function MacroAssetStack({ assets, showBalance }: Props) {
 
   const panGesture = useMemo(() => {
     const cardCount = assets.length;
-    const cardWidth = SCREEN_WIDTH - 48;
+    const cardWidth = screenWidth - 48;
+    const swipeThreshold = screenWidth * 0.25;
     const hitSlopX = -Math.round((cardWidth - 120) / 2);
-    const hitSlopY = -Math.round((200 - 120) / 2);
+    const hitSlopY = -Math.round((cardHeight - 120) / 2);
 
     return Gesture.Pan()
       .hitSlop({
@@ -335,10 +279,10 @@ export function MacroAssetStack({ assets, showBalance }: Props) {
         const currentX = translateX.value;
         const currentY = translateY.value;
 
-        const isSwipedLeft = currentX < -SWIPE_THRESHOLD;
-        const isSwipedRight = currentX > SWIPE_THRESHOLD;
-        const isSwipedUp = currentY < -SWIPE_THRESHOLD;
-        const isSwipedDown = currentY > SWIPE_THRESHOLD;
+        const isSwipedLeft = currentX < -swipeThreshold;
+        const isSwipedRight = currentX > swipeThreshold;
+        const isSwipedUp = currentY < -swipeThreshold;
+        const isSwipedDown = currentY > swipeThreshold;
 
         // Reset locked axis
         dragDirection.value = 0;
@@ -346,14 +290,14 @@ export function MacroAssetStack({ assets, showBalance }: Props) {
         if (isSwipedLeft || isSwipedRight || isSwipedUp || isSwipedDown) {
           // Continue in the swipe direction until off-screen
           const outX = isSwipedLeft
-            ? -SCREEN_WIDTH * 1.5
+            ? -screenWidth * 1.5
             : isSwipedRight
-              ? SCREEN_WIDTH * 1.5
+              ? screenWidth * 1.5
               : currentX;
           const outY = isSwipedUp
-            ? -SCREEN_WIDTH * 1.5
+            ? -screenWidth * 1.5
             : isSwipedDown
-              ? SCREEN_WIDTH * 1.5
+              ? screenWidth * 1.5
               : currentY;
 
           // Determine which axis is the primary swipe axis to attach callback
@@ -420,7 +364,7 @@ export function MacroAssetStack({ assets, showBalance }: Props) {
           translateY.value = withTiming(0, { duration: 200, easing: SMOOTH_EASING });
         }
       });
-  }, [assets.length, syncReactState]);
+  }, [assets.length, syncReactState, screenWidth, cardHeight]);
 
   if (!assets || assets.length === 0) {
     return null;
@@ -429,8 +373,8 @@ export function MacroAssetStack({ assets, showBalance }: Props) {
   return (
     <GestureDetector gesture={panGesture}>
       <View
-        className="relative w-full h-[220px] mb-6 items-center justify-center"
-        style={{ zIndex: 10 }}
+        className="relative w-full mb-6 items-center justify-center"
+        style={{ zIndex: 10, height: cardHeight + (Math.min(assets.length, MAX_VISIBLE) - 1) * Y_OFFSET_STEP }}
       >
         {assets.map((asset, index) => (
           <StackCard
@@ -444,6 +388,9 @@ export function MacroAssetStack({ assets, showBalance }: Props) {
             backCardOpacity={backCardOpacity}
             topIndexShared={topIndexShared}
             showBalance={showBalance}
+            cardholderName={cardholderName}
+            cardHeight={cardHeight}
+            screenWidth={screenWidth}
           />
         ))}
       </View>

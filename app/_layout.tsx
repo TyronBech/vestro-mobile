@@ -204,7 +204,7 @@ export default function RootLayout() {
           importantForAccessibility={isSessionLocked ? "no-hide-descendants" : "auto"}
         >
           <Stack
-            key={user?.id ?? "guest"}
+            key={`navigation:${user?.id ?? "guest"}`}
             initialRouteName={isAuthenticated ? "(tabs)" : "login"}
             screenOptions={{ gestureEnabled: !isSessionLocked }}
           >
@@ -223,7 +223,7 @@ export default function RootLayout() {
           </Stack>
           <Toast />
           {isAuthenticated && (
-            <Fragment key={user?.id}>
+            <Fragment key={`modals:${user?.id ?? "guest"}`}>
               <BudgetConfigModal />
               <MacroAssetModal />
               <CoreNetworkModal />
