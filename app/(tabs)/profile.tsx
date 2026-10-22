@@ -18,7 +18,8 @@ import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../../src/services/api/
 import { uploadImageToSupabase } from "../../src/utils/upload";
 
 export default function ProfileScreen() {
-  const { user, logout, refreshProfile } = useAuthStore();
+  const { user, logout, refreshProfile, isAuthenticated, isSessionLocked } = useAuthStore();
+  const canShowModal = isAuthenticated && !isSessionLocked;
   const insets = useSafeAreaInsets();
   const toast = useToastStore();
 
@@ -517,8 +518,8 @@ export default function ProfileScreen() {
 
       {/* Edit Profile Modal */}
       <Modal
-        visible={isEditModalOpen}
-        animationType="slide"
+        visible={isEditModalOpen && canShowModal}
+        animationType={canShowModal ? "slide" : "none"}
         transparent={true}
         onRequestClose={() => setIsEditModalOpen(false)}
       >
@@ -620,8 +621,8 @@ export default function ProfileScreen() {
 
       {/* Enable 2FA Modal */}
       <Modal
-        visible={is2faModalOpen}
-        animationType="slide"
+        visible={is2faModalOpen && canShowModal}
+        animationType={canShowModal ? "slide" : "none"}
         transparent={true}
         onRequestClose={() => setIs2faModalOpen(false)}
       >
