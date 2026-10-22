@@ -5,8 +5,23 @@ import { fetchProfile } from "../services/api/endpoints/profile";
 import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config";
 import { AuthState, UserResponse } from "../types";
 import { setTokenRefreshedCallback, setUnauthorizedCallback } from "../services/api/client";
+import { useUIStore } from "./ui-store";
+import { useToastStore } from "./toast-store";
 
 let activeGoogleLoginPromise: Promise<{ requires2fa: boolean; user: UserResponse | null }> | null = null;
+
+// A new login must not write credentials while an earlier logout is deleting them.
+let authStorageQueue: Promise<unknown> = Promise.resolve();
+function serializeAuthStorage<T>(operation: () => Promise<T>): Promise<T> {
+  const result = authStorageQueue.then(operation);
+  authStorageQueue = result.catch(() => {});
+  return result;
+}
+
+async function saveCredentials(token: string, user: UserResponse) {
+  await SecureStore.setItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN, token, SECURE_STORE_OPTIONS);
+  await SecureStore.setItemAsync(SECURE_STORE_KEYS.USER_PROFILE, JSON.stringify(user), SECURE_STORE_OPTIONS);
+}
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -92,21 +107,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { token, user, requires2fa } = response.data;
 
       if (token) {
-        await SecureStore.setItemAsync(
-          SECURE_STORE_KEYS.ACCESS_TOKEN,
-          token,
-          SECURE_STORE_OPTIONS
-        );
-        await SecureStore.setItemAsync(
-          SECURE_STORE_KEYS.USER_PROFILE,
-          JSON.stringify(user),
-          SECURE_STORE_OPTIONS
-        );
-        set({
-          accessToken: token,
-          user,
-          isAuthenticated: true,
-          loading: false,
+        await serializeAuthStorage(async () => {
+          await saveCredentials(token, user);
+          set({ accessToken: token, user, isAuthenticated: true, isSessionLocked: false, loading: false });
         });
         return { requires2fa: false, user };
       } else if (requires2fa) {
@@ -129,21 +132,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { token, user } = response.data;
 
       if (token) {
-        await SecureStore.setItemAsync(
-          SECURE_STORE_KEYS.ACCESS_TOKEN,
-          token,
-          SECURE_STORE_OPTIONS
-        );
-        await SecureStore.setItemAsync(
-          SECURE_STORE_KEYS.USER_PROFILE,
-          JSON.stringify(user),
-          SECURE_STORE_OPTIONS
-        );
-        set({
-          accessToken: token,
-          user,
-          isAuthenticated: true,
-          loading: false,
+        await serializeAuthStorage(async () => {
+          await saveCredentials(token, user);
+          set({ accessToken: token, user, isAuthenticated: true, isSessionLocked: false, loading: false });
         });
       } else {
         set({ loading: false });
@@ -161,21 +152,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { token, user } = response.data;
 
       if (token) {
-        await SecureStore.setItemAsync(
-          SECURE_STORE_KEYS.ACCESS_TOKEN,
-          token,
-          SECURE_STORE_OPTIONS
-        );
-        await SecureStore.setItemAsync(
-          SECURE_STORE_KEYS.USER_PROFILE,
-          JSON.stringify(user),
-          SECURE_STORE_OPTIONS
-        );
-        set({
-          accessToken: token,
-          user,
-          isAuthenticated: true,
-          loading: false,
+        await serializeAuthStorage(async () => {
+          await saveCredentials(token, user);
+          set({ accessToken: token, user, isAuthenticated: true, isSessionLocked: false, loading: false });
         });
       } else {
         set({ loading: false });
@@ -199,21 +178,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         const { token, user, requires2fa } = response.data;
 
         if (token) {
-          await SecureStore.setItemAsync(
-            SECURE_STORE_KEYS.ACCESS_TOKEN,
-            token,
-            SECURE_STORE_OPTIONS
-          );
-          await SecureStore.setItemAsync(
-            SECURE_STORE_KEYS.USER_PROFILE,
-            JSON.stringify(user),
-            SECURE_STORE_OPTIONS
-          );
-          set({
-            accessToken: token,
-            user,
-            isAuthenticated: true,
-            loading: false,
+          await serializeAuthStorage(async () => {
+            await saveCredentials(token, user);
+            set({ accessToken: token, user, isAuthenticated: true, isSessionLocked: false, loading: false });
           });
           return { requires2fa: false, user };
         } else if (requires2fa) {
@@ -235,31 +202,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    try {
-      await SecureStore.deleteItemAsync(
-        SECURE_STORE_KEYS.ACCESS_TOKEN,
-        SECURE_STORE_OPTIONS
-      );
-    } catch (err) {
-      console.error("Failed to delete token on logout", err);
-    }
-    try {
-      await SecureStore.deleteItemAsync(
-        SECURE_STORE_KEYS.BIOMETRIC_KEY,
-        SECURE_STORE_OPTIONS
-      );
-    } catch (err) {
-      console.error("Failed to delete biometric key on logout", err);
-    }
-    try {
-      await SecureStore.deleteItemAsync(
-        SECURE_STORE_KEYS.USER_PROFILE,
-        SECURE_STORE_OPTIONS
-      );
-    } catch (err) {
-      console.error("Failed to delete user profile on logout", err);
-    }
-    set({ user: null, accessToken: null, isAuthenticated: false, isSessionLocked: false });
+    // Remove protected UI immediately, even if native storage cleanup is slow.
+    set({ user: null, accessToken: null, isAuthenticated: false, isSessionLocked: false, loading: false, error: null });
+    useUIStore.getState().reset();
+    useToastStore.getState().hide();
+    return serializeAuthStorage(async () => {
+      for (const key of [SECURE_STORE_KEYS.ACCESS_TOKEN, SECURE_STORE_KEYS.BIOMETRIC_KEY, SECURE_STORE_KEYS.USER_PROFILE]) {
+        try {
+          await SecureStore.deleteItemAsync(key, SECURE_STORE_OPTIONS);
+        } catch (err) {
+          console.error("Failed to delete auth credential on logout", err);
+        }
+      }
+    });
   },
 
   forgotPassword: async (email: string) => {
@@ -301,7 +256,22 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   clearError: () => set({ error: null }),
 
-  biometricUnlock: async () => {
+  completeSessionUnlock: (token, user, lockedToken) => serializeAuthStorage(async () => {
+    const isCurrentSession = () => {
+      const current = useAuthStore.getState();
+      return current.isAuthenticated && current.isSessionLocked &&
+        current.user?.id === user.id && current.accessToken === lockedToken;
+    };
+    // Late responses must not restore a disconnected or different account.
+    if (!isCurrentSession()) return false;
+    await saveCredentials(token, user);
+    if (!isCurrentSession()) return false;
+    set({ accessToken: token, user, isAuthenticated: true, isSessionLocked: false, loading: false });
+    return true;
+  }),
+
+  biometricUnlock: async (): Promise<boolean> => {
+    const lockedToken = useAuthStore.getState().accessToken;
     set({ loading: true, error: null });
     try {
       const user = useAuthStore.getState().user;
@@ -323,25 +293,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       const { token, user: updatedUser } = response.data;
       if (token) {
-        await SecureStore.setItemAsync(
-          SECURE_STORE_KEYS.ACCESS_TOKEN,
-          token,
-          SECURE_STORE_OPTIONS
-        );
-        await SecureStore.setItemAsync(
-          SECURE_STORE_KEYS.USER_PROFILE,
-          JSON.stringify(updatedUser),
-          SECURE_STORE_OPTIONS
-        );
-        set({
-          accessToken: token,
-          user: updatedUser,
-          isAuthenticated: true,
-          isSessionLocked: false,
-          loading: false,
-        });
+        return await useAuthStore.getState().completeSessionUnlock(token, updatedUser, lockedToken);
       } else {
         set({ loading: false });
+        return false;
       }
     } catch (err: any) {
       set({ error: err.message || "Biometric unlock failed", loading: false });
@@ -349,6 +304,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 }));
+
+// Same-account unlock preserves drafts; changing the account discards them.
+useAuthStore.subscribe((state, previous) => {
+  if (state.user?.id !== previous.user?.id) useUIStore.getState().reset();
+});
 
 // Register API client callbacks to handle token refresh and auto session lock
 setTokenRefreshedCallback((token) => {

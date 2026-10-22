@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { CoreNetwork, CreditCard } from "../types";
 
 interface UIState {
+  reset: () => void;
   isBudgetModalOpen: boolean;
   openBudgetModal: () => void;
   closeBudgetModal: () => void;
@@ -46,6 +47,7 @@ interface UIState {
 }
 
 export const useUIStore = create<UIState>((set) => ({
+  reset: () => set(useUIStore.getInitialState()),
   isBudgetModalOpen: false,
   openBudgetModal: () => set({ isBudgetModalOpen: true }),
   closeBudgetModal: () => set({ isBudgetModalOpen: false }),

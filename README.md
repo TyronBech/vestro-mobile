@@ -9,7 +9,7 @@ This is the mobile client for **Vestro**, a financial management application bui
 ### 1. Technology Stack
 * **Framework**: React Native with [Expo SDK 55](https://docs.expo.dev/)
 * **Routing**: [Expo Router](https://docs.expo.dev/router/introduction/) (File-based navigation)
-* **Styling**: [NativeWind (Tailwind CSS v4)](https://www.nativewind.dev/)
+* **Styling**: [NativeWind v4 (Tailwind CSS v3)](https://www.nativewind.dev/)
 * **State Management**: [Zustand](https://github.com/pmndrs/zustand)
 * **Animation**: [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/)
 * **Database / Backend Sync**: Axios-based custom API client connecting to `vestro-backend` and Supabase Auth.

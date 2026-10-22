@@ -58,7 +58,8 @@ export interface AuthState {
   
   isSessionLocked: boolean;
   setSessionLocked: (locked: boolean) => void;
-  biometricUnlock: () => Promise<void>;
+  biometricUnlock: () => Promise<boolean>;
+  completeSessionUnlock: (token: string, user: UserResponse, lockedToken: string | null) => Promise<boolean>;
   initialize: () => Promise<void>;
   login: (params: LoginParams) => Promise<{ requires2fa: boolean; user?: UserResponse | null }>;
   loginWith2fa: (params: { userId: string; token: string }) => Promise<void>;

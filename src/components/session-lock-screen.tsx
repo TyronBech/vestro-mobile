@@ -14,7 +14,7 @@ import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../services/api/config"
 import StartEngineCard from "./start-engine-card";
 
 export default function SessionLockScreen() {
-  const { user, logout, biometricUnlock } = useAuthStore();
+  const { user, accessToken, logout, biometricUnlock, completeSessionUnlock } = useAuthStore();
   const toast = useToastStore();
 
   const isSubmittingRef = useRef(false);
@@ -163,8 +163,7 @@ export default function SessionLockScreen() {
       if (result.success) {
         setLoading(true);
         try {
-          await biometricUnlock();
-          toast.show("Welcome back!", "success");
+          if (await biometricUnlock()) toast.show("Welcome back!", "success");
         } catch (err: any) {
           console.error("Biometric unlock store error:", err);
           if (err.status === 429) {
@@ -226,23 +225,9 @@ export default function SessionLockScreen() {
 
         const { token, user: updatedUser } = response.data;
         if (token) {
-          await SecureStore.setItemAsync(
-            SECURE_STORE_KEYS.ACCESS_TOKEN,
-            token,
-            SECURE_STORE_OPTIONS
-          );
-          await SecureStore.setItemAsync(
-            SECURE_STORE_KEYS.USER_PROFILE,
-            JSON.stringify(updatedUser),
-            SECURE_STORE_OPTIONS
-          );
-          useAuthStore.setState({
-            accessToken: token,
-            user: updatedUser,
-            isAuthenticated: true,
-            isSessionLocked: false,
-          });
-          toast.show("Unlocked successfully!", "success");
+          if (await completeSessionUnlock(token, updatedUser, accessToken)) {
+            toast.show("Unlocked successfully!", "success");
+          }
         } else {
           throw new Error("Invalid code");
         }
@@ -263,23 +248,9 @@ export default function SessionLockScreen() {
           setRequires2fa(true);
           toast.show("2FA verification required", "warning");
         } else if (token) {
-          await SecureStore.setItemAsync(
-            SECURE_STORE_KEYS.ACCESS_TOKEN,
-            token,
-            SECURE_STORE_OPTIONS
-          );
-          await SecureStore.setItemAsync(
-            SECURE_STORE_KEYS.USER_PROFILE,
-            JSON.stringify(updatedUser),
-            SECURE_STORE_OPTIONS
-          );
-          useAuthStore.setState({
-            accessToken: token,
-            user: updatedUser,
-            isAuthenticated: true,
-            isSessionLocked: false,
-          });
-          toast.show("Welcome back!", "success");
+          if (await completeSessionUnlock(token, updatedUser, accessToken)) {
+            toast.show("Welcome back!", "success");
+          }
         }
       }
     } catch (err: any) {

@@ -7,11 +7,14 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "statusBar": {
+    "androidStatusBar": {
       "barStyle": "dark-content",
       "backgroundColor": "#fdfefe",
       "translucent": false
+    },
+    "androidNavigationBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#fdfefe"
     },
     "plugins": [
       "expo-router",
@@ -35,11 +38,7 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.vestro",
       "versionCode": 3,
-      "googleServicesFile": "./google-services.json",
-      "navigationBar": {
-        "barStyle": "dark-content",
-        "backgroundColor": "#fdfefe"
-      }
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
