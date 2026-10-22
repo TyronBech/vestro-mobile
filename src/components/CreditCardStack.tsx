@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { View, Text, Dimensions, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from "react-native";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -11,23 +11,25 @@ import Animated, {
   Easing,
   SharedValue,
 } from "react-native-reanimated";
-import Svg, { Defs, Rect, RadialGradient, Stop } from "react-native-svg";
 import { Colors } from "../../constants/colors";
 import { Sizes } from "../../constants/sizes";
 import {
-  CreditCard as CardIcon,
   ShieldCheck,
   ShieldAlert,
   Shield,
 } from "lucide-react-native";
 import { CreditCard } from "../types";
-import * as Haptics from "expo-haptics";
 import { useUIStore } from "../store/ui-store";
-import MastercardIcon from "../../assets/svgs/mastercard.svg";
-import VisaIcon from "../../assets/svgs/visa.svg";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
+import {
+  BankCardIdentity,
+  BankCardSurface,
+  CardAmount,
+  CardHolder,
+  CardNetwork,
+  CardNumber,
+  cardStyles,
+} from './bank-card';
+import { bankCardHeight, createBankCardTheme } from './bank-card-theme';
 
 /** Smooth ease curve — no spring bounce anywhere */
 const SMOOTH_EASING = Easing.bezier(0.25, 0.1, 0.25, 1);
@@ -46,36 +48,6 @@ function formatCurrency(amountInCents: number): string {
   }).format(amountInCents / 100);
 }
 
-function AssetIcon({ url }: { url: string | null | undefined }) {
-  const [error, setError] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<number | undefined>(undefined);
-
-  React.useEffect(() => {
-    if (url) {
-      Image.getSize(
-        url,
-        (width, height) => {
-          if (height > 0) setAspectRatio(width / height);
-        },
-        () => setError(true),
-      );
-    }
-  }, [url]);
-
-  if (!url || error) {
-    return <CardIcon size={Sizes.iconXSmall} color={Colors.background} strokeWidth={Sizes.strokeMedium} />;
-  }
-
-  return (
-    <Image
-      source={{ uri: url }}
-      style={{ height: 16, aspectRatio: aspectRatio || 1, borderRadius: 2 }}
-      resizeMode="contain"
-      onError={() => setError(true)}
-    />
-  );
-}
-
 interface StackCardProps {
   card: CreditCard;
   cardIndex: number;
@@ -86,6 +58,9 @@ interface StackCardProps {
   backCardOpacity: SharedValue<number>;
   topIndexShared: SharedValue<number>;
   showBalance: boolean;
+  cardholderName?: string | null;
+  cardHeight: number;
+  screenWidth: number;
   onPressCard: (card: CreditCard) => void;
 }
 
@@ -99,8 +74,15 @@ function StackCard({
   backCardOpacity,
   topIndexShared,
   showBalance,
+  cardholderName,
+  cardHeight,
+  screenWidth,
   onPressCard,
 }: StackCardProps) {
+  const theme = useMemo(
+    () => createBankCardTheme(card.macroAsset?.colorCode, card.macroAsset?.bankName || card.cardName),
+    [card.macroAsset?.colorCode, card.macroAsset?.bankName, card.cardName],
+  );
   // Calculate utilization on the fly
   const effectiveSpend = card.unbilledSpend - card.midCyclePaid;
   const utilization =
@@ -109,30 +91,17 @@ function StackCard({
   // Determine health status
   let status: "SAFE" | "WARNING" | "DANGER" = "SAFE";
   let statusColor: string = Colors.successAlt;
-  let statusBg = "bg-emerald-500/10";
   let StatusIcon = ShieldCheck;
 
   if (utilization >= 50) {
     status = "DANGER";
     statusColor = Colors.actionPrimary;
-    statusBg = "bg-red-500/10";
     StatusIcon = ShieldAlert;
   } else if (utilization >= 30) {
     status = "WARNING";
     statusColor = Colors.warningAlt;
-    statusBg = "bg-amber-500/10";
     StatusIcon = Shield;
   }
-
-  // Card gradient color - metallic gold for gold tier, amber for warning, dark charcoal for titanium/standard
-  const primaryGradientColor =
-    utilization >= 50
-      ? Colors.actionPrimary
-      : utilization >= 30
-        ? Colors.warningAlt
-        : card.creditLimit >= 10000000
-          ? Colors.gold
-          : Colors.backgroundDark;
 
   const animatedStyle = useAnimatedStyle(() => {
     const rawRelative = (cardIndex - topIndexShared.value) % totalCards;
@@ -168,12 +137,12 @@ function StackCard({
 
       const rotateX = interpolate(
         translateX.value,
-        [-SCREEN_WIDTH, SCREEN_WIDTH],
+        [-screenWidth, screenWidth],
         [-12, 12],
       );
       const rotateY = interpolate(
         translateY.value,
-        [-SCREEN_WIDTH, SCREEN_WIDTH],
+        [-screenWidth, screenWidth],
         [-6, 6],
       );
       const rotation = `${rotateX + rotateY}deg`;
@@ -225,114 +194,49 @@ function StackCard({
   return (
     <Animated.View
       style={[
-        { position: "absolute", width: "100%", height: 210 },
+        { position: "absolute", top: 0, width: "100%", height: cardHeight },
         animatedStyle,
       ]}
     >
       <TouchableOpacity
         activeOpacity={0.95}
         onPress={() => onPressCard(card)}
-        className="w-full h-full border border-borderLight rounded-2xl overflow-hidden shadow-sm bg-background"
+        accessibilityRole="button"
+        accessibilityHint="Edit credit card details"
+        style={{ flex: 1 }}
       >
-        {/* Radial gradient background */}
-        <Svg height="100%" width="100%" style={{ position: "absolute" }}>
-          <Defs>
-            <RadialGradient
-              id={`ccGrad-${card.id}`}
-              cx="100%"
-              cy="100%"
-              r="85%"
-              fx="100%"
-              fy="100%"
-            >
-              <Stop
-                offset="0%"
-                stopColor={primaryGradientColor}
-                stopOpacity="1"
-              />
-              <Stop
-                offset="40%"
-                stopColor={primaryGradientColor}
-                stopOpacity="0.85"
-              />
-              <Stop offset="100%" stopColor={Colors.darkStopEndAlt} stopOpacity="1" />
-            </RadialGradient>
-          </Defs>
-          <Rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            fill={`url(#ccGrad-${card.id})`}
-          />
-        </Svg>
-
-        <View className="p-5 flex-1 justify-between">
-          {/* Top Row: Card name and status badge */}
-          <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center">
-              <AssetIcon url={card.macroAsset?.iconUrl} />
-              <Text className="text-background text-xs font-black uppercase tracking-widest ml-1.5">
-                {card.cardName}
-              </Text>
-            </View>
-
-            {/* Health Status Badge */}
-            <View
-              className={`flex-row items-center px-2 py-0.5 rounded-full ${statusBg}`}
-            >
+        <BankCardSurface theme={theme}>
+          <View style={cardStyles.header}>
+            <BankCardIdentity
+              name={card.macroAsset?.bankName || card.cardName}
+              iconUrl={card.macroAsset?.iconUrl}
+            />
+            <View style={[styles.statusBadge, { borderColor: `${statusColor}55` }]}>
               <StatusIcon size={Sizes.iconTiny} color={statusColor} strokeWidth={Sizes.strokeThick} />
-              <Text
-                style={{ color: statusColor }}
-                className="text-[8px] font-black uppercase tracking-wider ml-1"
-              >
-                {status} ({utilization.toFixed(0)}%)
-              </Text>
+              <Text style={[styles.statusText, { color: statusColor }]}>{status} {utilization.toFixed(0)}%</Text>
             </View>
           </View>
-
-          {/* Unbilled Spend / Balance */}
-          <View className="mt-2">
-            <Text className="text-gray-400 text-[9px] uppercase tracking-widest mb-0.5">
-              Unbilled Spend
-            </Text>
-            <Text className="text-background text-3xl font-black tracking-widest">
-              {showBalance ? formatCurrency(card.unbilledSpend) : "••••••••"}
-            </Text>
-            {card.midCyclePaid > 0 && showBalance && (
-              <Text className="text-emerald-400 text-[9px] font-bold uppercase tracking-wider mt-0.5">
-                Paid Early: {formatCurrency(card.midCyclePaid)}
-              </Text>
-            )}
+          <CardAmount
+            label="Unbilled spend"
+            value={showBalance ? formatCurrency(card.unbilledSpend) : '••••••••'}
+            note={card.midCyclePaid > 0 && showBalance ? `Paid early: ${formatCurrency(card.midCyclePaid)}` : undefined}
+          />
+          <CardNumber />
+          <View style={cardStyles.footer}>
+            <CardHolder name={cardholderName} detail={card.cardName} />
+            <CardNetwork brand={card.cardBrand} />
           </View>
-
-          {/* Bottom Row: Details and Mastercard logo */}
-          <View className="flex-row justify-between items-end">
-            <View className="flex-row flex-1 mr-4">
-              <View>
-                <Text className="text-gray-400 text-[8px] uppercase tracking-widest mb-0.5">
-                  Limit
-                </Text>
-                <Text className="text-background text-[11px] font-black uppercase tracking-widest">
-                  ₱{(card.creditLimit / 100).toLocaleString()}
-                </Text>
-              </View>
-              <View className="ml-4">
-                <Text className="text-gray-400 text-[8px] uppercase tracking-widest mb-0.5">
-                  Cutoff / Due
-                </Text>
-                <Text className="text-background text-[11px] font-black uppercase tracking-widest">
-                  Day {card.statementCutoffDay} / {card.paymentDueDay}
-                </Text>
-              </View>
+          <View style={styles.details}>
+            <View style={styles.limit}>
+              <Text style={cardStyles.label}>Credit limit</Text>
+              <Text numberOfLines={1} adjustsFontSizeToFit style={styles.detailValue}>{formatCurrency(card.creditLimit)}</Text>
             </View>
-            {card.cardBrand === "VISA" ? (
-              <VisaIcon width={50} height={16} color={Colors.background} />
-            ) : (
-              <MastercardIcon width={40} height={25} />
-            )}
+            <View style={styles.dates}>
+              <Text style={cardStyles.label}>Cutoff / Due</Text>
+              <Text numberOfLines={1} style={styles.detailValue}>Day {card.statementCutoffDay} / {card.paymentDueDay}</Text>
+            </View>
           </View>
-        </View>
+        </BankCardSurface>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -341,9 +245,12 @@ function StackCard({
 interface Props {
   cards: CreditCard[];
   showBalance: boolean;
+  cardholderName?: string | null;
 }
 
-export function CreditCardStack({ cards, showBalance }: Props) {
+export function CreditCardStack({ cards, showBalance, cardholderName }: Props) {
+  const { width: screenWidth, fontScale } = useWindowDimensions();
+  const cardHeight = bankCardHeight('credit', fontScale);
   const [topIndex, setTopIndex] = useState(0);
 
   const translateX = useSharedValue(0);
@@ -364,9 +271,10 @@ export function CreditCardStack({ cards, showBalance }: Props) {
 
   const panGesture = useMemo(() => {
     const cardCount = cards.length;
-    const cardWidth = SCREEN_WIDTH - 48;
+    const cardWidth = screenWidth - 48;
+    const swipeThreshold = screenWidth * 0.25;
     const hitSlopX = -Math.round((cardWidth - 120) / 2);
-    const hitSlopY = -Math.round((210 - 120) / 2);
+    const hitSlopY = -Math.round((cardHeight - 120) / 2);
 
     return Gesture.Pan()
       .hitSlop({
@@ -407,23 +315,23 @@ export function CreditCardStack({ cards, showBalance }: Props) {
         const currentX = translateX.value;
         const currentY = translateY.value;
 
-        const isSwipedLeft = currentX < -SWIPE_THRESHOLD;
-        const isSwipedRight = currentX > SWIPE_THRESHOLD;
-        const isSwipedUp = currentY < -SWIPE_THRESHOLD;
-        const isSwipedDown = currentY > SWIPE_THRESHOLD;
+        const isSwipedLeft = currentX < -swipeThreshold;
+        const isSwipedRight = currentX > swipeThreshold;
+        const isSwipedUp = currentY < -swipeThreshold;
+        const isSwipedDown = currentY > swipeThreshold;
 
         dragDirection.value = 0;
 
         if (isSwipedLeft || isSwipedRight || isSwipedUp || isSwipedDown) {
           const outX = isSwipedLeft
-            ? -SCREEN_WIDTH * 1.5
+            ? -screenWidth * 1.5
             : isSwipedRight
-              ? SCREEN_WIDTH * 1.5
+              ? screenWidth * 1.5
               : currentX;
           const outY = isSwipedUp
-            ? -SCREEN_WIDTH * 1.5
+            ? -screenWidth * 1.5
             : isSwipedDown
-              ? SCREEN_WIDTH * 1.5
+              ? screenWidth * 1.5
               : currentY;
 
           const mainAxisIsX = isSwipedLeft || isSwipedRight;
@@ -496,7 +404,7 @@ export function CreditCardStack({ cards, showBalance }: Props) {
           });
         }
       });
-  }, [cards.length, syncReactState]);
+  }, [cards.length, syncReactState, screenWidth, cardHeight]);
 
   if (!cards || cards.length === 0) {
     return null;
@@ -505,8 +413,8 @@ export function CreditCardStack({ cards, showBalance }: Props) {
   return (
     <GestureDetector gesture={panGesture}>
       <View
-        className="relative w-full h-[230px] mb-6 items-center justify-center"
-        style={{ zIndex: 9 }}
+        className="relative w-full mb-6 items-center justify-center"
+        style={{ zIndex: 9, height: cardHeight + (Math.min(cards.length, MAX_VISIBLE) - 1) * Y_OFFSET_STEP }}
       >
         {cards.map((card, index) => (
           <StackCard
@@ -520,6 +428,9 @@ export function CreditCardStack({ cards, showBalance }: Props) {
             backCardOpacity={backCardOpacity}
             topIndexShared={topIndexShared}
             showBalance={showBalance}
+            cardholderName={cardholderName}
+            cardHeight={cardHeight}
+            screenWidth={screenWidth}
             onPressCard={onPressCard}
           />
         ))}
@@ -527,3 +438,12 @@ export function CreditCardStack({ cards, showBalance }: Props) {
     </GestureDetector>
   );
 }
+
+const styles = StyleSheet.create({
+  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 5, borderWidth: 1, borderRadius: 20, backgroundColor: '#0c111be6', flexShrink: 0 },
+  statusText: { fontSize: 8, fontWeight: '800', letterSpacing: 0.3 },
+  details: { flexDirection: 'row', gap: 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#ffffff1f' },
+  limit: { flex: 1, minWidth: 0 },
+  dates: { flexShrink: 0, alignItems: 'flex-end' },
+  detailValue: { color: '#ffffff', fontSize: 10, fontWeight: '700', fontVariant: ['tabular-nums'], marginTop: 4 },
+});

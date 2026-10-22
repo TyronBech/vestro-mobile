@@ -236,6 +236,32 @@ test('authenticated navigation has an available initial route', () => {
   assert.equal(stack.props.initialRouteName, '(tabs)');
 });
 
+test('account-owned navigation and forms have distinct keys that survive locking and change on account switch', () => {
+  const state = { isAuthenticated: true, user: { id: 'alice' }, isSessionLocked: false };
+  const { render, Stack } = layoutFixture(state);
+  function accountKeys() {
+    const tree = elements(render());
+    const background = tree.find((el) => el.type === native.View && elements(el).some((child) => child.type === Stack));
+    const children = React.Children.toArray(background.props.children);
+    const stack = children.find((el) => el.type === Stack);
+    const forms = children.find((el) => el.type === React.Fragment);
+    assert.ok(stack);
+    assert.ok(forms);
+    assert.notEqual(stack.key, forms.key, 'navigation and forms are siblings and must not share a key');
+    return { stack: stack.key, forms: forms.key };
+  }
+
+  const alice = accountKeys();
+  state.isSessionLocked = true;
+  assert.deepEqual(accountKeys(), alice, 'locking must preserve the same account draft');
+  state.isSessionLocked = false;
+  assert.deepEqual(accountKeys(), alice, 'unlocking must preserve the same account draft');
+  state.user = { id: 'bob' };
+  const bob = accountKeys();
+  assert.notEqual(bob.stack, alice.stack, 'account switching must reset navigation');
+  assert.notEqual(bob.forms, alice.forms, 'account switching must reset form state');
+});
+
 test('a biometric response arriving after disconnect cannot sign the user back in', async () => {
   let finishLogin;
   let loginStarted;

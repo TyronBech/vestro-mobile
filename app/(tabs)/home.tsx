@@ -7,9 +7,6 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
-import VisaIcon from '../../assets/svgs/visa.svg';
-import MastercardIcon from '../../assets/svgs/mastercard.svg';
 
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
@@ -18,7 +15,7 @@ import { SECURE_STORE_KEYS, SECURE_STORE_OPTIONS } from "../../src/services/api/
 import { apiClient } from "../../src/services/api/client";
 import { Colors } from "../../constants/colors";
 import { Sizes } from "../../constants/sizes";
-import { CreditCard as CardIcon, Eye, EyeOff, Bell, Activity, ArrowDownLeft, ArrowUpRight, Plus } from "lucide-react-native";
+import { Bell, Activity, ArrowDownLeft, ArrowUpRight, Plus } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { fetchMacroAssets, MacroAsset } from "../../src/services/api/endpoints/macro-assets";
 import { MacroAssetStack } from "../../src/components/MacroAssetStack";
@@ -26,6 +23,7 @@ import { fetchCashFlows, CashFlow } from "../../src/services/api/endpoints/cash-
 import { useUIStore } from "../../src/store/ui-store";
 import { fetchCreditCards, CreditCard } from "../../src/services/api/endpoints/credit-cards";
 import { CreditCardStack } from "../../src/components/CreditCardStack";
+import { NetWorthCard } from "../../src/components/NetWorthCard";
 import { fetchNotifications } from "../../src/services/api/endpoints/notification";
 import FlatModal from "../../src/components/flat-modal";
 import { LuxuryWishlistWidget } from "../../src/components/LuxuryWishlistWidget";
@@ -262,65 +260,14 @@ export default function HomeTabScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Net Worth Card (Debit Card Design) */}
-        <View className="border border-borderLight rounded-2xl mb-4 relative overflow-hidden">
-          {/* Flat Minimalist Gradient Background */}
-          <Svg height="100%" width="100%" style={{ position: 'absolute' }}>
-            <Defs>
-              <LinearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor={Colors.darkStopStart} stopOpacity="1" />
-                <Stop offset="1" stopColor={Colors.darkStopEndHome} stopOpacity="1" />
-              </LinearGradient>
-            </Defs>
-            <Rect x="0" y="0" width="100%" height="100%" fill="url(#cardGrad)" />
-          </Svg>
-
-          <View className="p-6">
-            {/* Top Row: Net Worth Label & Eye Icon */}
-            <View className="flex-row justify-between items-center mb-6">
-              <View className="flex-row items-center">
-                <CardIcon size={18} stroke={Colors.background} strokeWidth={2.5} />
-                <Text className="text-background text-[11px] font-bold uppercase tracking-widest ml-2">
-                  Net Worth
-                </Text>
-              </View>
-              <TouchableOpacity onPress={toggleBalanceVisibility}>
-                {showBalance ? (
-                  <Eye size={18} stroke={Colors.background} strokeWidth={2} />
-                ) : (
-                  <EyeOff size={18} stroke={Colors.background} strokeWidth={2} />
-                )}
-              </TouchableOpacity>
-            </View>
-
-          {/* Balance */}
-          <Text className="text-background text-4xl font-black mb-8 tracking-widest">
-            {showBalance ? formatCurrency(balanceCents, user.currency) : "••••••••"}
-          </Text>
-
-            {/* Bottom Row: User Name & Visa/Mastercard Logo (Tap to Toggle) */}
-            <View className="flex-row justify-between items-end mt-2">
-              <View>
-                <Text className="text-gray-400 text-[10px] uppercase tracking-widest mb-1">
-                  Cardholder
-                </Text>
-                <Text className="text-background text-sm font-bold uppercase tracking-widest">
-                  {user.name || "User"}
-                </Text>
-              </View>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={toggleCardBrand}
-              >
-                {netWorthCardBrand === 'VISA' ? (
-                  <VisaIcon width={50} height={16} color={Colors.background} />
-                ) : (
-                  <MastercardIcon width={40} height={25} />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+        <NetWorthCard
+          balance={formatCurrency(balanceCents, user.currency)}
+          showBalance={showBalance}
+          cardholderName={user.name}
+          cardBrand={netWorthCardBrand}
+          onToggleBalance={toggleBalanceVisibility}
+          onToggleBrand={toggleCardBrand}
+        />
 
         {/* Macro Assets Stack or Empty State */}
         {macroAssets.length === 0 ? (
@@ -340,7 +287,7 @@ export default function HomeTabScreen() {
             </Text>
           </TouchableOpacity>
         ) : (
-          <MacroAssetStack assets={displayAssets} showBalance={showBalance} />
+          <MacroAssetStack assets={displayAssets} showBalance={showBalance} cardholderName={user.name} />
         )}
 
         {/* Credit Card Stack Section */}
@@ -361,7 +308,7 @@ export default function HomeTabScreen() {
             </Text>
           </TouchableOpacity>
         ) : (
-          <CreditCardStack cards={creditCards} showBalance={showBalance} />
+          <CreditCardStack cards={creditCards} showBalance={showBalance} cardholderName={user.name} />
         )}
 
         {/* Luxury Wishlist Widget */}

@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+#private assets
+assets/private/*
+
 # Expo
 .expo/
 .vscode/
